@@ -1210,9 +1210,10 @@ End Function
 '                 in that case the resulting TAG willl be appended to the resulting cipher text
 '                 at present only default taglen (12) - implemented TBD
 ' IV            : IV hex string with initialization vector should be 16 for ECB & CBC 12 for GCM
+' GCMtagLen     : The length of the TAG expected to be a the end of the string (OBS only 12 tested)
 '-------------------------------------------------------------------------------------------------------
-Public Function AES_Encrypt(ByVal key As String, ByVal plain As String, Optional ByVal mode As String = "CBC", Optional ByVal iv As String = "") As String
-    AES_Encrypt = DoCrypt("AES", "ENCRYPT", plain, key, mode, iv)
+Public Function AES_Encrypt(ByVal key As String, ByVal plain As String, Optional ByVal mode As String = "CBC", Optional ByVal iv As String = "", Optional ByVal GCMtagLen As Long = 12) As String
+    AES_Encrypt = DoCrypt("AES", "ENCRYPT", plain, key, mode, iv, GCMtagLen)
 End Function
 '------------------------------------------------------------------------------------------------------
 ' AES_Decrypt (key, cipher, mode, iv, gcmTagLen) decrypts cipher with AES algorithm
@@ -1279,7 +1280,7 @@ Private Function DoCrypt(ByVal algorithm As String, ByVal func As String, ByVal 
         GoTo Exit_DoCrypt
     End If
     ' for GCM split the instring in the part which is the encoded buffer and the GCMtag
-    If (mode = "GCM") Then 'split the inString in the encoded buffer and the GCMtag
+    If (mode = "GCM" And func = "DECRYPT") Then 'split the inString in the encoded buffer and the GCMtag
         GCMTag = GCM_getTag(inString, GCMtagLen)
         inString = GCM_getEncrypted(inString, GCMtagLen)
     End If
@@ -1352,7 +1353,9 @@ Private Function DoCrypt(ByVal algorithm As String, ByVal func As String, ByVal 
         BCryptAuthenticatedAuthModeInfo.pbNonce = VarPtr(nonceBytes(1))
         BCryptAuthenticatedAuthModeInfo.cbNonce = UBound(nonceBytes)
         If (func = "ENCRYPT") Then
-            ReDim authTag(1 To authTagLengths.dwMinLength) 'Make room for the AuthTag
+'            ReDim authTag(1 To authTagLengths.dwMinLength) 'Make room for the AuthTag
+             ReDim authTag(1 To GCMtagLen) 'Make room for the AuthTag
+
         Else
             appendHexStrToByteArray authTag, GCMTag ' Set the AuthTag to value passed
             If (strRes <> "") Then

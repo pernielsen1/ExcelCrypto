@@ -17,7 +17,6 @@ const EVP_CIPHER *cipher_type;
 unsigned int encrypt;
 
 const unsigned long BUFFER_SIZE = 32000;
-const unsigned long TAG_SIZE = 12;  // Changed from 16 in example
 void handleErrors(const char *strError)
 {
     printf("We have errors in %s\n", strError);
@@ -37,7 +36,7 @@ int gcm_encrypt(unsigned char *plaintext, int plaintext_len,
                 unsigned char *key,
                 unsigned char *iv, int iv_len,
                 unsigned char *ciphertext,
-                unsigned char *tag)
+                unsigned char *tag, int tag_len)
 {
     EVP_CIPHER_CTX *ctx;
 
@@ -88,7 +87,7 @@ int gcm_encrypt(unsigned char *plaintext, int plaintext_len,
     ciphertext_len += len;
 
     /* Get the tag */
-    if(1 != EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_GCM_GET_TAG, TAG_SIZE, tag))
+    if(1 != EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_GCM_GET_TAG, tag_len, tag))
         handleErrors("encrypt EVT_CIPHER_CTX_ctrl - get the tag");
 
     /* Clean up */
@@ -100,7 +99,7 @@ int gcm_encrypt(unsigned char *plaintext, int plaintext_len,
 
 int gcm_decrypt(unsigned char *ciphertext, int ciphertext_len,
                 unsigned char *aad, int aad_len,
-                unsigned char *tag,
+                unsigned char *tag, int tag_len,
                 unsigned char *key,
                 unsigned char *iv, int iv_len,
                 unsigned char *plaintext)
@@ -111,7 +110,7 @@ int gcm_decrypt(unsigned char *ciphertext, int ciphertext_len,
     int ret;
 
     dumpBuffer("cipherText:", ciphertext, ciphertext_len);
-    dumpBuffer("tag:", tag, TAG_SIZE);
+    dumpBuffer("tag:", tag, tag_len);
     dumpBuffer("iv:", iv, iv_len);
     dumpBuffer("aad:", aad, aad_len);
     /* Create and initialise the context */
@@ -146,7 +145,7 @@ int gcm_decrypt(unsigned char *ciphertext, int ciphertext_len,
     plaintext_len = len;
     dumpBuffer("plain:", plaintext, plaintext_len);
     /* Set expected tag value. Works in OpenSSL 1.0.1d and later */
-    if(!EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_GCM_SET_TAG, TAG_SIZE, tag))
+    if(!EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_GCM_SET_TAG, tag_len, tag))
         handleErrors("decrypt EVP_cipher_ctx_ctrl - set expected tag");
 
     /*
@@ -168,12 +167,15 @@ int gcm_decrypt(unsigned char *ciphertext, int ciphertext_len,
 
 int main(int argc, char *argv[]) {
     FILE *f_input, *f_output;
-    unsigned char tempBuffer[BUFFER_SIZE+TAG_SIZE];
+//   unsigned char tempBuffer[BUFFER_SIZE+1000];
+    unsigned char *tempBuffer = NULL;
     unsigned char inBuffer[BUFFER_SIZE];
     unsigned char outBuffer[BUFFER_SIZE];
-    unsigned char tag[TAG_SIZE];
+    unsigned char *tag=NULL;
     int aad_len;
-    unsigned char aad[TAG_SIZE]; // not used really
+    int tag_len;
+    int iv_size; 
+//    unsigned char aad[TAG_SIZE]; // not used really
     int numBytes;
     int maxBufferSize;
     int result;
@@ -183,12 +185,29 @@ int main(int argc, char *argv[]) {
     	printf("enc=e means encrypt d=decrypt");
         return -1;
     }
+    tag_len = 12;  // assume standard length
+    if (argc == 7) {  // tag len passed convert to int using  https://stackoverflow.com/questions/9748393/how-can-i-get-argv-as-int      
+        char *p;
+        long conv=strtol(argv[6], &p, 10);
+        if (errno != 0 || *p != '\0' || conv > INT_MAX || conv < INT_MIN) {
+            printf("Error converting tag_len %s", argv[6]);
+            exit -1;
+        } else {
+            tag_len=conv;
+        }
+    }
+
+    printf("tag_len %d\n", tag_len);
+    tag=(unsigned char *) malloc(tag_len);
     long l;    
     key= OPENSSL_hexstr2buf(argv[3], &l);
     iv= OPENSSL_hexstr2buf(argv[4], &l);
+    iv_size=(int) l;
+    printf("iv_size %d\n", iv_size);
     // default to decrypt
     encrypt = 0;
-    maxBufferSize=BUFFER_SIZE+TAG_SIZE;
+    maxBufferSize=BUFFER_SIZE+tag_len;
+    tempBuffer = (unsigned char*) malloc(maxBufferSize);
     if (strcmp(argv[5], "e") == 0) {
 	    encrypt=1;
         maxBufferSize=BUFFER_SIZE;
@@ -213,32 +232,32 @@ int main(int argc, char *argv[]) {
     }
     // read input to tempbuffer
     aad_len=0;   // we don't have any aad in this simple example
-    numBytes = fread(tempBuffer, sizeof(unsigned char), BUFFER_SIZE+TAG_SIZE, f_input);
+    numBytes = fread(tempBuffer, sizeof(unsigned char), BUFFER_SIZE + tag_len, f_input);
     if (ferror(f_input)){
         fprintf(stderr, "ERROR: fread error: %s\n", strerror(errno));
     }
     if (encrypt) {
         memcpy(inBuffer, tempBuffer, numBytes);
     } else {
-   	   memcpy(inBuffer, tempBuffer, numBytes - TAG_SIZE);
-	   memcpy(tag, tempBuffer + numBytes - TAG_SIZE, TAG_SIZE);
+   	   memcpy(inBuffer, tempBuffer, numBytes - tag_len);
+	   memcpy(tag, tempBuffer + numBytes - tag_len, tag_len);
     }
     
     printf("Doing %s infile:%s outfile:%s key:%s iv:%s\n", argv[5], argv[1], argv[2], argv[3], argv[4]);
     if (encrypt) {
         result= gcm_encrypt(inBuffer, numBytes,
-                        aad, aad_len, 
+                        NULL, 0, 
                         key,
-                        iv, TAG_SIZE,
+                        iv, iv_size,
                         outBuffer,
-                        tag);
+                        tag, tag_len);
     }
     else {
-        result = gcm_decrypt(inBuffer, numBytes-TAG_SIZE,
-                            aad, aad_len,
-                            tag,
+        result = gcm_decrypt(inBuffer, numBytes-tag_len,
+                            NULL, 0,
+                            tag, tag_len,
                             key,
-                            iv, TAG_SIZE,
+                            iv, iv_size,
                             outBuffer);
 
     }
@@ -249,7 +268,7 @@ int main(int argc, char *argv[]) {
             exit(1);
         }
         if (encrypt) {   // write the tag after the cipher message
-            fwrite(tag, sizeof(unsigned char), TAG_SIZE, f_output);
+            fwrite(tag, sizeof(unsigned char), tag_len, f_output);
             if (ferror(f_output)) {
                 fprintf(stderr, "ERROR: fwrite error of TAG: %s\n", strerror(errno));
                 exit(1); 
@@ -257,6 +276,8 @@ int main(int argc, char *argv[]) {
         }
     } 
     /* Encryption done, close the file descriptors */
+    free((void *) tag);
+    free((void *) tempBuffer);
     fclose(f_input);
     fclose(f_output);
    
