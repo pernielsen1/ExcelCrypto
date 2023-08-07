@@ -1230,6 +1230,17 @@ Public Function AES_Decrypt(ByVal key As String, ByVal cipher As String, Optiona
     AES_Decrypt = DoCrypt("AES", "DECRYPT", cipher, key, mode, iv, GCMtagLen)
 End Function
 '------------------------------------------------------------------------------------------------------
+' AES_KCV (key) calculate a KCV i.e. encrypt 8*x00 with IV 0x00 and return first 4 bytes
+' key           : The DES key in hex string can be single DES, Double DES or Tripple DES
+'------------------------------------------------------------------------------------------------------
+Public Function AES_KCV(ByVal key As String, Optional ByVal kcvLen As Long = 8) As String
+    Dim Hex00x8 As String
+    Hex00x8 = "0000000000000000"
+    AES_KCV = Mid(DoCrypt("AES", "ENCRYPT", Hex00x8 & Hex00x8, key, "ECB", Hex00x8 & Hex00x8), 1, kcvLen)
+    
+End Function
+
+'------------------------------------------------------------------------------------------------------
 ' DES_Encrypt (key, plain, mode, iv) encrypts plain with DES algorithm
 ' key           : The DES key in hex string can be single DES, Double DES or Tripple DES
 ' plain         : A hex string with the plain data to be encrypted
@@ -1249,6 +1260,18 @@ End Function
 Public Function DES_Decrypt(ByVal key As String, ByVal cipher As String, Optional ByVal mode As String = "CBC", Optional ByVal iv As String = "") As String
     DES_Decrypt = DoCrypt("DES", "DECRYPT", cipher, key, mode, iv)
 End Function
+'------------------------------------------------------------------------------------------------------
+' DES_KCV (key) calculate a KCV i.e. encrypt 8*x00 with IV 0x00 and return first 4 bytes
+' key           : The DES key in hex string can be single DES, Double DES or Tripple DES
+'------------------------------------------------------------------------------------------------------
+Public Function DES_KCV(ByVal key As String, Optional ByVal kcvLen As Long = 8) As String
+    Dim Hex00x8 As String
+    Hex00x8 = "0000000000000000"
+    DES_KCV = Mid(DoCrypt("DES", "ENCRYPT", Hex00x8, key, "ECB", Hex00x8), 1, kcvLen)
+End Function
+
+
+
 Private Function DoCrypt(ByVal algorithm As String, ByVal func As String, ByVal inString As String, ByVal key As String, Optional ByVal mode As String = "CBC", _
         Optional ByVal iv As String = "", Optional ByVal GCMtagLen As Long) As String
     Dim strRes As String, strProperty As String, strPropertyValue As String, GCMTag As String
