@@ -1,0 +1,2 @@
+#!/bin/bash
+openssl base64 -e -in $1 -out $2

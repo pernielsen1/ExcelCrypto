@@ -1,0 +1,33 @@
+#!/bin/bash
+echo "1234567890 Hello World">utils_test.orig
+# test back and forth to base64
+./utils_bintobase64 utils_test.orig utils_test.base64
+./utils_base64tobin utils_test.base64 utils_test.bin
+cmp utils_test.orig utils_test.bin
+if [[ $? != 0 ]]; then
+    echo "Files are different"
+fi
+# test back and forth to hexstr
+./utils_bintohexstr utils_test.orig utils_test.hexstr
+./utils_hexstrtobin utils_test.hexstr utils_test.bin
+cmp utils_test.orig utils_test.bin
+if [[ $? != 0 ]]; then
+    echo "Files are different"
+fi
+# test hexstrtobase64
+
+./utils_hexstrtobase64 utils_test.hexstr utils_test.base642
+cmp utils_test.base64 utils_test.base642
+if [[ $? != 0 ]]; then
+    echo "Files are different"
+fi
+# test base64tohexstr
+./utils_base64tohexstr utils_test.base64 utils_test.hexstr2
+cmp utils_test.hexstr utils_test.hexstr2
+if [[ $? != 0 ]]; then
+    echo "Files are different"
+fi
+# clean up
+rm utils_test.*
+
+
