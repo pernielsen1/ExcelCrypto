@@ -1,2 +1,6 @@
 #!/bin/bash
+if [ "$#" -ne 2 ]; then
+    echo "Illegal number of parameters usage: utils_base64tobin <base64file> <binfile>"
+    exit 1
+fi
 openssl base64 -d -in $1 -out $2

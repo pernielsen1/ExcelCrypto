@@ -1,4 +1,8 @@
 #!/bin/bash
+if [ "$#" -ne 2 ]; then
+    echo "Illegal number of parameters usage: utils_hexstrxor <hexxor1> <bhexxor2>"
+    exit 1
+fi
 # convert the two hex string passed to text arrays
 bytearr1=(`echo $(echo $1 | fold -w2)`)
 bytearr2=(`echo $(echo $2 | fold -w2)`)

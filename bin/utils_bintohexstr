@@ -1,1 +1,6 @@
+#!/bin/bash
+if [ "$#" -ne 2 ]; then
+    echo "Illegal number of parameters usage: utils_bintohexstr <binfile> <hexstrfile>"
+    exit 1
+fi
 xxd -p $1| tr -d '\n'>$2

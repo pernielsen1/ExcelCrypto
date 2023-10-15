@@ -29,5 +29,11 @@ if [[ $? != 0 ]]; then
 fi
 # clean up
 rm utils_test.*
-
+# do the wrong args tests
+./utils_base64tobin
+./utils_base64tohexstr
+./utils_bintobase64
+./utils_bintohexstr
+./utils_hexstrtobin
+./utils_hexstrxor
 
