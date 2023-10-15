@@ -1,0 +1,16 @@
+#!/bin/bash
+# convert the two hex string passed to byte arrays
+bytearr1=(`echo $(echo $1 | fold -w2)`)
+bytearr2=(`echo $(echo $2 | fold -w2)`)
+# must be of same length
+if [ ${#bytearr1[@]} != ${#bytearr2[@]} ]; then
+    echo "Error in utils_hexstr - two hex strings are not same length"
+    exit 1
+fi
+# loop through the two byte arrays and xor elements store result in resstr
+resstr=""
+limitCount=$(( ${#bytearr1[@]} - 1 ))
+for (( count=0; count <= limitCount; count++ )); do
+  resstr+=`printf "%02X\n" "$(( 0x${bytearr1[count]} ^ 0x${bytearr2[count]} ))"`
+done
+echo $resstr
