@@ -1,0 +1,6 @@
+#!/bin/bash
+if [ "$#" -ne 1 ]; then
+    echo "Illegal number of parameters usage: utils_hexstrtobase64str <hexstr>"
+    exit 1
+fi
+echo $1|xxd  -r -p|openssl base64 -e
