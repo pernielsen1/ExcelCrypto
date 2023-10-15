@@ -1,13 +1,14 @@
 #!/bin/bash
-# convert the two hex string passed to byte arrays
+# convert the two hex string passed to text arrays
 bytearr1=(`echo $(echo $1 | fold -w2)`)
 bytearr2=(`echo $(echo $2 | fold -w2)`)
+# echo "bytearr1" ${bytearr1[@]}
 # must be of same length
 if [ ${#bytearr1[@]} != ${#bytearr2[@]} ]; then
     echo "Error in utils_hexstr - two hex strings are not same length"
     exit 1
 fi
-# loop through the two byte arrays and xor elements store result in resstr
+# loop through the two arrays and convert elements to byte and xor them store in resstr
 resstr=""
 limitCount=$(( ${#bytearr1[@]} - 1 ))
 for (( count=0; count <= limitCount; count++ )); do
