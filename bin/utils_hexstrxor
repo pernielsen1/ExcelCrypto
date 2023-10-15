@@ -1,6 +1,6 @@
 #!/bin/bash
 if [ "$#" -ne 2 ]; then
-    echo "Illegal number of parameters usage: utils_hexstrxor <hexxor1> <bhexxor2>"
+    echo "Illegal number of parameters usage: utils_hexstrxor <hexxor1> <hexxor2>"
     exit 1
 fi
 # convert the two hex string passed to text arrays
