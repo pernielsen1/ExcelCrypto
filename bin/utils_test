@@ -37,4 +37,6 @@ rm utils_test.*
 ./utils_hexstrtobin
 ./utils_hexstrtobase64
 ./utils_hexstrxor
+./utils_base64strtohexstr
+./utils_hexstrtobase64str
 

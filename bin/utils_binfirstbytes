@@ -1,0 +1,6 @@
+#!/bin/bash
+if [ "$#" -ne 3 ]; then
+    echo "Illegal number of parameters usage: utils_bintofirstbyte <bin_infile> <numberofbytes> <bin_outfile>"
+    exit 1
+fi
+cat $1|head -c $2>$3
