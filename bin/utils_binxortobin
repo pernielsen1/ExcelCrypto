@@ -1,0 +1,19 @@
+#!/bin/bash
+if [ "$#" -ne 3 ]; then
+    echo "Illegal number of parameters usage: utils_binxortobin <binfile1> <binfile2> <binresultfile>"
+    exit 1
+fi
+binxor1=`xxd -p $1| tr -d '\n'`
+binxor2=`xxd -p $2| tr -d '\n'`
+# must be of same length
+if [ ${#binxor1} != ${#binxor2} ]; then
+    echo "Error in utils_binxortobin - two hex strings are not same length"
+    exit 1
+fi
+# loop through the to hex strings elements to byte and xor them store in resstr
+resstr=""
+for (( count=0; count < ${#binxor1}; count=count + 2)); do
+   resstr+=`printf "%02X\n" "$(( 0x${binxor1:count:2} ^ 0x${binxor2:count:2} ))"`
+done
+# convert the hex string to binary
+echo -n $resstr|xxd -r -p>$3
