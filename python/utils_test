@@ -1,0 +1,21 @@
+#!/bin/bash
+echo "1234567890 Hello World">utils_test.orig
+# test back and forth to base64
+python3 utils_bintobase64.py utils_test.orig utils_test.base64
+python3 utils_base64tobin.py utils_test.base64 utils_test.bin
+cmp utils_test.orig utils_test.bin
+if [[ $? != 0 ]]; then
+    echo "Files are different"
+fi
+python3 utils_bintohexstr.py utils_test.orig utils_test.hexstr
+python3 utils_hexstrtobin.py utils_test.hexstr utils_test.bin
+cmp utils_test.orig utils_test.bin
+if [[ $? != 0 ]]; then
+    echo "Files are different"
+fi
+# wrong usage
+python3 utils_bintohexstr.py
+python3 utils_hexstrtobin.py
+python3 utils_base64tobin.py
+python3 utils_bintobase64.py
+
