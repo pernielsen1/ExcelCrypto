@@ -4,17 +4,24 @@ import shutil
 
 excel_dir='/mnt/c/users/perni/OneDrive/Documents/PythonTest'
 out_dir='/home/perni/ExcelCrypto/python/output'
-
+# write a CSV file for each occurence of break field i.e. balance date normally
 def eject_csv(df, break_field, file_name):
+    to_df=df.copy(deep=False)
+    to_df.drop(to_df.index, inplace=True) # remove all rows keep columns
     first = True
     for index, row in df.iterrows():
-        cur_value=row(break_field) 
+        cur_value=row[break_field] 
         if (first):
             break_value=cur_value
+            first=False
         if (cur_value != break_value):
-            write_csv2(break_field, file_name, df)
-                   
-
+            write_csv2(break_value, file_name, to_df)
+            break_value = cur_value
+            to_df.drop(to_df.index, inplace=True) # remove all rows keep columns
+        to_df.loc[len(to_df)]=row    # copy current row      
+    if (len(to_df) > 0 ):  # Eject last if not empty
+       write_csv2(break_value, file_name, to_df)
+        
 
 
 # read all transaction which is sorted in date order - update account balance - when date breaks eject total balance and clear 
@@ -25,46 +32,34 @@ def load_post(file_name):
     post07_df= pd.DataFrame(columns=['BAL_DATE','ACCOUNT_ID','POTP', 'ACCOUNT_GL','AMOUNT_GL', 'CUR_GL'])
     break_bal_date=0
     for index, row in df.iterrows():
-        cur_bal_date=row['BAL_DATE']
-        if (cur_bal_date != break_bal_date):
-            if (break_bal_date != 0): 
-                write_csv2(break_bal_date, 'POST06', post06_df)
-                write_csv2(break_bal_date, 'POST07', post07_df)
-                post06_df.drop(post06_df.index, inplace=True) # remove all rows keep columns
-                post07_df.drop(post07_df.index, inplace=True) # remove all rows keep columns
-        # detai handling
-      
-        break_bal_date=cur_bal_date
         post06_df.loc[len(post06_df)] = [row['BAL_DATE'],  row['ACCOUNT_ID'], row['POTP'], row['AMOUNT_GL'], row['CUR_GL']]
         post07_df.loc[len(post07_df)] = [row['BAL_DATE'],  row['ACCOUNT_ID'], row['POTP'], row['ACCOUNT_GL1'], row['AMOUNT_GL'], row['CUR_GL']]
         post07_df.loc[len(post07_df)] = [row['BAL_DATE'],  row['ACCOUNT_ID'], row['POTP'], row['ACCOUNT_GL2'], -row['AMOUNT_GL'], row['CUR_GL']]
-   
-    # 
-    if (break_bal_date != 0): 
-        write_csv2(break_bal_date, 'POST06', post06_df)
-        write_csv2(break_bal_date, 'POST07', post07_df)
-    # BAL_DATE	TRANS_ID	POTP	ACCOUNT_ID	AMOUNT_TRANS	CUR_TRANS	AMOUNT_GL	CUR_GL	ACCOUNT_GL1	ACCOUNT_GL2	INVOICE_NO	PAYMENT_REF	INVOICE_DATE
+    eject_csv(post06_df, 'BAL_DATE', 'POST06')
+    eject_csv(post07_df, 'BAL_DATE', 'POST07')
+    SAPGL01_df = post07_df.groupby(['BAL_DATE', 'ACCOUNT_GL', 'CUR_GL'], as_index=False)['AMOUNT_GL'].sum()
+    eject_csv(SAPGL01_df, 'BAL_DATE', 'SAPGL01')
+ 
     print(df)
-    invoice_df = df.groupby(['INVOICE_DATE', 'ACCOUNT_ID', 'CUR_GL','INVOICE_NO'], as_index=False)['AMOUNT_GL'].sum()
-    print(invoice_df)   
+    ADVI01_df = df.groupby(['INVOICE_DATE', 'ACCOUNT_ID', 'CUR_GL','INVOICE_NO'], as_index=False)['AMOUNT_GL'].sum()
+    eject_csv(ADVI01_df, 'INVOICE_DATE', 'ADVI01')
 
-
-    sum_df = df.groupby(['BAL_DATE','ACCOUNT_ID','CUR_GL'], as_index=False)['AMOUNT_GL'].sum()
-    to_df= pd.DataFrame(columns=['BAL_DATE','ACCOUNT_ID', 'AMOUNT_GL', 'CUR_GL'])
-    # to_df.reset_index(drop=True, inplace=True)
-    for index, row in sum_df.iterrows():
-        cur_bal_date=row['BAL_DATE']
-        if (cur_bal_date != break_bal_date):
-            if (break_bal_date != 0): 
-                write_csv2(break_bal_date, 'ARAC03', to_df)
-                to_df.drop(to_df.index, inplace=True) # remove all rows keep columns
-        # detail handling
-        break_bal_date=cur_bal_date
-        to_df.loc[len(to_df)] = [row['BAL_DATE'],  row['ACCOUNT_ID'], row['AMOUNT_GL'], row['CUR_GL']]
-    # end of loop - write last data set
-    if(break_bal_date !=0):
-        write_csv2(break_bal_date, 'ARAC03', to_df)
-    
+    # create a summary data set holding balance per account the amount_gl is just dummy field - only really need the keys and a balance field
+    sum_pr_account = df.groupby(['ACCOUNT_ID', 'CUR_GL'], as_index=False)['AMOUNT_GL'].sum()
+    sum_pr_account['BALANCE'] = 0
+    sum_pr_account=sum_pr_account.set_index('ACCOUNT_ID', drop=False)
+    ARAC03_df= pd.DataFrame(columns=['BAL_DATE','ACCOUNT_ID','BAL_TYPE', 'AMOUNT_GL', 'CUR_GL'])
+    for i in range(len(df)):
+        cur_account=df.loc[df.index[i], 'ACCOUNT_ID']
+        sum_pr_account.at[cur_account,'BALANCE'] = sum_pr_account.loc[cur_account, 'BALANCE'] + df.loc[df.index[i], 'AMOUNT_GL']
+        cur_bal_date= df.loc[df.index[i], 'BAL_DATE']    
+        # peek at next row if end of data set or new BAL_DATE then time to write balances
+        if ((i+1)==len(df) or (cur_bal_date != df.loc[df.index[i+1], 'BAL_DATE'])):
+            for index, row in sum_pr_account.iterrows():
+                ARAC03_df.loc[len(ARAC03_df)] = [cur_bal_date,  row['ACCOUNT_ID'], 1, row['BALANCE'], row['CUR_GL']]
+    eject_csv(ARAC03_df, 'BAL_DATE', 'ARAC03')
+    # end of post
+                
 def write_csv2(bal_date, file_name, df):
     new_dir = out_dir + '/' + str(bal_date)
     if not os.path.isdir(new_dir):
@@ -127,7 +122,8 @@ movies_sheet1 = pd.read_excel(excel_file, sheet_name=0, index_col=0)
 movies_sheet1.head()
 print(movies_sheet1)
 exit(0)
-
+# to_df.reset_index(drop=True, inplace=True)
+ 
 # importing the module
 import base64
 # https://www.dataquest.io/blog/excel-and-pandas/ 
