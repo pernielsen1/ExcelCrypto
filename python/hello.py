@@ -4,7 +4,9 @@ import shutil
 
 excel_dir='/mnt/c/users/perni/OneDrive/Documents/PythonTest'
 out_dir='/home/perni/ExcelCrypto/python/output'
+# -------------------------------------------------------------------------------
 # write a CSV file for each occurence of break field i.e. balance date normally
+# -------------------------------------------------------------------------------
 def eject_csv(df, break_field, file_name):
     to_df=df.copy(deep=False)
     to_df.drop(to_df.index, inplace=True) # remove all rows keep columns
@@ -20,30 +22,33 @@ def eject_csv(df, break_field, file_name):
             to_df.drop(to_df.index, inplace=True) # remove all rows keep columns
         to_df.loc[len(to_df)]=row    # copy current row      
     if (len(to_df) > 0 ):  # Eject last if not empty
-       write_csv2(break_value, file_name, to_df)
-        
+       write_csv2(break_value, file_name, to_df)      
 
-
-# read all transaction which is sorted in date order - update account balance - when date breaks eject total balance and clear 
+# ----------------------------------------------------------------------------------------------------------------------------
+# read all transaction which is sorted in date order - update account balance - when date breaks eject total balance and clear
+# ---------------------------------------------------------------------------------------------------------------------------- 
 def load_post(file_name):
     df = pd.read_excel(excel_dir + '/' + file_name, sheet_name='POST', index_col=1)
+    print(df)
+
     # Create POST06 & POST07 from transactions
     post06_df= pd.DataFrame(columns=['BAL_DATE','ACCOUNT_ID','POTP', 'AMOUNT_GL', 'CUR_GL'])
     post07_df= pd.DataFrame(columns=['BAL_DATE','ACCOUNT_ID','POTP', 'ACCOUNT_GL','AMOUNT_GL', 'CUR_GL'])
-    break_bal_date=0
     for index, row in df.iterrows():
         post06_df.loc[len(post06_df)] = [row['BAL_DATE'],  row['ACCOUNT_ID'], row['POTP'], row['AMOUNT_GL'], row['CUR_GL']]
         post07_df.loc[len(post07_df)] = [row['BAL_DATE'],  row['ACCOUNT_ID'], row['POTP'], row['ACCOUNT_GL1'], row['AMOUNT_GL'], row['CUR_GL']]
         post07_df.loc[len(post07_df)] = [row['BAL_DATE'],  row['ACCOUNT_ID'], row['POTP'], row['ACCOUNT_GL2'], -row['AMOUNT_GL'], row['CUR_GL']]
-    eject_csv(post06_df, 'BAL_DATE', 'POST06')
-    eject_csv(post07_df, 'BAL_DATE', 'POST07')
+  
+    # create summarized SAPGL01 from POST
     SAPGL01_df = post07_df.groupby(['BAL_DATE', 'ACCOUNT_GL', 'CUR_GL'], as_index=False)['AMOUNT_GL'].sum()
-    eject_csv(SAPGL01_df, 'BAL_DATE', 'SAPGL01')
  
-    print(df)
-    ADVI01_df = df.groupby(['INVOICE_DATE', 'ACCOUNT_ID', 'CUR_GL','INVOICE_NO'], as_index=False)['AMOUNT_GL'].sum()
-    eject_csv(ADVI01_df, 'INVOICE_DATE', 'ADVI01')
-
+    # create invoice summary
+    advi01_df = df.groupby(['INVOICE_DATE', 'ACCOUNT_ID', 'CUR_GL','INVOICE_NO'], as_index=False)['AMOUNT_GL'].sum()
+    advi01_df['OPENBAL'] = advi01_df['AMOUNT_GL']
+    advi01_df=advi01_df.set_index('INVOICE_NO', drop=False)
+    advi01_chg_df = advi01_df
+    print(advi01_df)
+ 
     # create a summary data set holding balance per account the amount_gl is just dummy field - only really need the keys and a balance field
     sum_pr_account = df.groupby(['ACCOUNT_ID', 'CUR_GL'], as_index=False)['AMOUNT_GL'].sum()
     sum_pr_account['BALANCE'] = 0
@@ -57,7 +62,13 @@ def load_post(file_name):
         if ((i+1)==len(df) or (cur_bal_date != df.loc[df.index[i+1], 'BAL_DATE'])):
             for index, row in sum_pr_account.iterrows():
                 ARAC03_df.loc[len(ARAC03_df)] = [cur_bal_date,  row['ACCOUNT_ID'], 1, row['BALANCE'], row['CUR_GL']]
+
+    # write to csv
+    eject_csv(post06_df, 'BAL_DATE', 'POST06')
+    eject_csv(post07_df, 'BAL_DATE', 'POST07')
     eject_csv(ARAC03_df, 'BAL_DATE', 'ARAC03')
+    eject_csv(SAPGL01_df, 'BAL_DATE', 'SAPGL01')
+
     # end of post
                 
 def write_csv2(bal_date, file_name, df):
