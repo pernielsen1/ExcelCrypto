@@ -1,9 +1,10 @@
 import pandas as pd
 import os
 import shutil
-
+import datetime
 excel_dir='/mnt/c/users/perni/OneDrive/Documents/PythonTest'
 out_dir='/home/perni/ExcelCrypto/python/output'
+big_dir='/home/perni/ExcelCrypto/python/big'
 # -------------------------------------------------------------------------------
 # write a CSV file for each occurence of break field i.e. balance date normally
 # -------------------------------------------------------------------------------
@@ -28,8 +29,25 @@ def eject_csv(df, break_field, file_name):
 # read all transaction which is sorted in date order - update account balance - when date breaks eject total balance and clear
 # ---------------------------------------------------------------------------------------------------------------------------- 
 def load_post(file_name):
-    df = pd.read_excel(excel_dir + '/' + file_name, sheet_name='POST', index_col=1)
-    print(df)
+    df = pd.read_excel(excel_dir + '/' + file_name, sheet_name='POST')
+    arac03_df = df[['ACCOUNT_ID', 'CUR_GL', 'AMOUNT_GL', 'AMOUNT_TRANS']].copy(deep=True)
+    print(arac03_df)
+    arac03_sum = df.groupby(['ACCOUNT_ID','CUR_GL'], as_index=False).sum()
+    print(arac03_sum)
+    arac03_sum = arac03_df.groupby(['ACCOUNT_ID','CUR_GL']).sum()
+    print(arac03_sum)
+ 
+    # sum_pr_account = df.groupby(['ACCOUNT_ID', 'CUR_GL'], as_index=False)['AMOUNT_GL'].sum()
+   
+
+    print(arac03_sum)
+    return
+    # create invoice summary
+    advi01_df = df.groupby(['INVOICE_DATE', 'ACCOUNT_ID', 'CUR_GL','INVOICE_NO'], as_index=False)['AMOUNT_GL'].sum()
+    advi01_df['OPENBAL'] = advi01_df['AMOUNT_GL']
+    advi01_df=advi01_df.set_index('INVOICE_NO', drop=False)
+    advi01_chg_df = advi01_df
+
 
     # Create POST06 & POST07 from transactions
     post06_df= pd.DataFrame(columns=['BAL_DATE','ACCOUNT_ID','POTP', 'AMOUNT_GL', 'CUR_GL'])
@@ -38,16 +56,20 @@ def load_post(file_name):
         post06_df.loc[len(post06_df)] = [row['BAL_DATE'],  row['ACCOUNT_ID'], row['POTP'], row['AMOUNT_GL'], row['CUR_GL']]
         post07_df.loc[len(post07_df)] = [row['BAL_DATE'],  row['ACCOUNT_ID'], row['POTP'], row['ACCOUNT_GL1'], row['AMOUNT_GL'], row['CUR_GL']]
         post07_df.loc[len(post07_df)] = [row['BAL_DATE'],  row['ACCOUNT_ID'], row['POTP'], row['ACCOUNT_GL2'], -row['AMOUNT_GL'], row['CUR_GL']]
-  
+        # is it a payment and can we find mathing invoice ? 
+        potp = row['POTP']
+      #  if (potp == 'PAY'):
+      #      # try to find invoice
+            
     # create summarized SAPGL01 from POST
     SAPGL01_df = post07_df.groupby(['BAL_DATE', 'ACCOUNT_GL', 'CUR_GL'], as_index=False)['AMOUNT_GL'].sum()
  
-    # create invoice summary
-    advi01_df = df.groupby(['INVOICE_DATE', 'ACCOUNT_ID', 'CUR_GL','INVOICE_NO'], as_index=False)['AMOUNT_GL'].sum()
-    advi01_df['OPENBAL'] = advi01_df['AMOUNT_GL']
-    advi01_df=advi01_df.set_index('INVOICE_NO', drop=False)
-    advi01_chg_df = advi01_df
-    print(advi01_df)
+    # handle payments of invoices 
+    # for index, row in df.iterrows():
+        
+
+
+    # print(advi01_df)
  
     # create a summary data set holding balance per account the amount_gl is just dummy field - only really need the keys and a balance field
     sum_pr_account = df.groupby(['ACCOUNT_ID', 'CUR_GL'], as_index=False)['AMOUNT_GL'].sum()
@@ -62,6 +84,7 @@ def load_post(file_name):
         if ((i+1)==len(df) or (cur_bal_date != df.loc[df.index[i+1], 'BAL_DATE'])):
             for index, row in sum_pr_account.iterrows():
                 ARAC03_df.loc[len(ARAC03_df)] = [cur_bal_date,  row['ACCOUNT_ID'], 1, row['BALANCE'], row['CUR_GL']]
+
 
     # write to csv
     eject_csv(post06_df, 'BAL_DATE', 'POST06')
@@ -118,13 +141,76 @@ def clear_dir(folder):
 def write_csv(folder_name, file_name, df):
     df.to_csv(folder_name + '/' + file_name + '.csv', sep=';', encoding='utf-8', index=False)
     
+def build_big():
+    c1_df= pd.DataFrame(columns=['ID','NAME'])
+    c2_df= pd.DataFrame(columns=['ID','NAME2'])
+    c3_df= pd.DataFrame(columns=['ID','ADDR1'])
+    for i in range(0, 50000):
+        c1_df.loc[len(c1_df)] = [i,  "My Number Name is:" + str(i)]
+        c3_df.loc[len(c3_df)] = [i,  "My C1 Address is:" + str(i)]
+    for i in range(50000, 225000):
+        c2_df.loc[len(c2_df)] = [i,  "My Number Name is:" + str(i)]
+        c3_df.loc[len(c3_df)] = [i,  "My C2 Address is:" + str(i)]
+
+    c1_df.to_csv(big_dir + '/' + 'C1.csv', sep=';', encoding='utf-8', index=False)
+    c2_df.to_csv(big_dir + '/' + 'C2.csv', sep=';', encoding='utf-8', index=False)
+    c3_df.to_csv(big_dir + '/' + 'C3.csv', sep=';', encoding='utf-8', index=False)
+
+    print("Done")
+def log(msg):
+    now = datetime.datetime.now()
+    print(msg, now.strftime("%Y-%m-%d, %H:%M:%S"))
+
+def load_big():
+    log("Start")
+    c1_df = pd.read_csv(big_dir + '/' + 'C1.csv', sep= ';')
+    print(c1_df.head())
+    log("after c1:")
+    c2_df = pd.read_csv(big_dir + '/' + 'C2.csv', sep= ';')
+    log("after c2:")
+
+    c3_df = pd.read_csv(big_dir + '/' + 'C3.csv', sep= ';')
+    log("after c3:")
+    
+    
+    c1_c3_df = pd.merge(c1_df, c3_df, on='ID', how='left')
+    log("after join c1 C3")
+
+    c2_c3_df = pd.merge(c2_df, c3_df, on='ID', how='left')
+    log("after join c2 c3:")
+
+#    c1_c3_df.to_csv(out_dir + '/' + 'C1_C3.csv', sep=';', encoding='utf-8', index=False)
+#    log("after C1 c3 to csv:")
+
+#   c2_c3_df.to_csv(out_dir + '/' + 'C2_C3.csv', sep=';', encoding='utf-8', index=False)
+#    log("after c2 C3 to csv:")
+    
+    out_file = open(out_dir + '/' + "C1_C3_outfile.txt", "wb")
+    for index, row in c1_c3_df.iterrows():
+        record = ( 
+                  str(row['ID']).zfill(10) +  
+                  "{:<40}".format(row['NAME'])[0:40] + 
+                  "{:<40}".format(row['ADDR1'])[0:40] 
+                  )
+        encoded = bytearray(record.encode('utf-8'))
+        out_file.write(encoded)
+    
+    # End of file - let's close the output file
+    out_file.close()
+
+
+    
+
 
 print('current directory:' + os.getcwd())
 
 file_name = 'cust.xlsx'
 clear_dir(out_dir)
+# clear_dir(big_dir)
+# build_big()
+load_big()
 # show_excel(file_name, 'CUST01')
-load_post(file_name)
+# load_post(file_name)
 exit(0)
 excel_file= file_dir + '/' + file_name
 print(excel_file)
