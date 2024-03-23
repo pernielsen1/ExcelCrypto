@@ -2,7 +2,6 @@ import pandas as pd
 import os
 import shutil
 import datetime
-import ebcdic
 excel_dir='/mnt/c/users/perni/OneDrive/Documents/PythonTest'
 config_dir='/home/perni/ExcelCrypto/python/config'
 out_dir='/home/perni/ExcelCrypto/python/output'
@@ -131,16 +130,58 @@ def pandas_test():
     df_trn_sum = df_trn.groupby(['entity', 'acc']).agg({'amount_gc':'sum','amount_org':'sum'})
     print(df_trn_sum)
 
+def testinv():
+    trn =  {'bal_dat': ['2023-11-30', '2023-11-30', '2023-12-01'],
+            'ttypc': ['PURC', 'PURC', 'PAY'],
+            'amt': [100, 200, -140],
+            'inv_dat': ['2023-11-30', '2023-11-30', '2023-12-31'],
+            'inv_no': [1, 1, 2],
+            'ref_mo': [0, 0, 1]
+            }
+    df_trn = pd.DataFrame(data=trn)
+    print(df_trn)
+    return
+
+def csv_test(out_dir):
+    test_dict =  {'acc': ['A1', 'A2', 'A3'],
+            'amount_org':[200.12, 400.23, 600], 
+            'dummy_number':[1, 2, 3]}
+    df = pd.DataFrame(data=test_dict)
+
+    print(df.dtypes)
+    outfile=out_dir + "/test.csv"
+    df.to_csv(outfile, index=False, sep=";", decimal=",")
+    print(outfile)
+
+def write_trailer(file_name, num_rows):
+    now = datetime.datetime.now()
+    str_time=now.strftime('%Y-%m-%dT%H:%M:%S') + ('-%02d' % (now.microsecond / 10000))
+    str_trailer="99," + str_time + "," + str(num_rows)
+    f1 = open(file_name, "a")  # append mode
+    f1.write(str_trailer + "\n")
+    f1.close()
+
+def excel_csv_test(file_name, out_dir):
+    excel_name=excel_dir + "/" + file_name
+    print(excel_name)
+    df=pd.read_excel(excel_name, sheet_name='POST')
+    print(df.dtypes)
+    outfile=out_dir + "/test.csv"
+    df.to_csv(outfile, index=False, sep=";", decimal=",")
+    write_trailer(outfile, len(df))
+
+    print(outfile)
 
 print('current directory:' + os.getcwd())
 file_name = 'cust.xlsx'
 clear_dir(out_dir)
-config = load_config()
-big_dir=config["input_dir"]
-
+excel_csv_test(file_name, out_dir)
+# config = load_config()
+# big_dir=config["input_dir"]
+# testinv()
 # build_big(int(config["numc1"]), int(config["numc2"]))
 # load_big()
-pandas_test()   
+# pandas_test()   
 exit(0)
  
 # importing the module
