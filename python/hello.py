@@ -172,10 +172,53 @@ def excel_csv_test(file_name, out_dir):
 
     print(outfile)
 
+class out_file:
+    def __init__(self, segment, outdir, infile):
+        self.segment=segment
+        self.num_recs=0
+        self.num_err_recs = 0
+        self.out_file = open(outdir + '/' + infile + '_' + segment + '.txt', 'w')
+
+def write_line(out_file_dict, txt_line, segment, outdir, infile):
+    if not (segment in out_file_dict.keys()):
+        out_file_obj = out_file(segment, outdir, infile)
+        out_file_dict.update({segment: out_file_obj})
+    file_obj = out_file_dict.get(segment)
+    file_obj.num_recs = file_obj.num_recs + 1
+    file_obj.out_file.write(txt_line) 
+
+def close_files(out_file_dict):
+    for k  in out_file_dict:
+        out_file_obj = out_file_dict[k]
+        out_file_obj.out_file.close()
+        print("outfile:" + out_file_obj.segment + " num_recs:" + str(out_file_obj.num_recs))
+    
+
 print('current directory:' + os.getcwd())
-file_name = 'cust.xlsx'
+#file_name = 'cust.xlsx'
 clear_dir(out_dir)
-excel_csv_test(file_name, out_dir)
+f_dict=dict()
+write_line(f_dict, "l1" + "\n", "s1", out_dir, "infile")
+write_line(f_dict, "l2" + "\n", "s2", out_dir, "infile")
+write_line(f_dict, "l3" + "\n", "s1", out_dir, "infile")
+write_line(f_dict, "l4" + "\n", "s2", out_dir, "infile")
+close_files(f_dict)
+# # out_file1 = open('f1-txt', 'w')
+# out_file2 = open('f2.txt', 'w')
+# f_dict.update({"f1": out_file1})
+#f_dict.update({"f2": out_file2})
+# f=f_dict.get("f1")
+# f.write("t1")
+# f=f_dict.get("f2")
+# f.write("t2")
+# out_file1.close()
+# out_file2.close()
+# this_dict = {
+#    "name" : "f1",
+#    "f_obj" : out_file1
+#}
+
+#excel_csv_test(file_name, out_dir)
 # config = load_config()
 # big_dir=config["input_dir"]
 # testinv()
