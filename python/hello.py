@@ -187,13 +187,16 @@ def write_line(out_file_dict, txt_line, segment, outdir, infile):
     file_obj.num_recs = file_obj.num_recs + 1
     file_obj.out_file.write(txt_line) 
 
-def close_files(out_file_dict):
+def close_files(out_file_dict, out_dir):
+    stat_file = open(out_dir + "/stat_out_file_dict.csv", "w")
     for k  in out_file_dict:
         out_file_obj = out_file_dict[k]
         out_file_obj.out_file.close()
-        print("outfile:" + out_file_obj.segment + " num_recs:" + str(out_file_obj.num_recs))
+        stat_file.write(out_file_obj.segment + ";" + str(out_file_obj.num_recs) 
+                        + ";" + str(out_file_obj.num_err_recs) 
+                        + "\n")
     
-
+    
 print('current directory:' + os.getcwd())
 #file_name = 'cust.xlsx'
 clear_dir(out_dir)
@@ -202,7 +205,7 @@ write_line(f_dict, "l1" + "\n", "s1", out_dir, "infile")
 write_line(f_dict, "l2" + "\n", "s2", out_dir, "infile")
 write_line(f_dict, "l3" + "\n", "s1", out_dir, "infile")
 write_line(f_dict, "l4" + "\n", "s2", out_dir, "infile")
-close_files(f_dict)
+close_files(f_dict, out_dir)
 # # out_file1 = open('f1-txt', 'w')
 # out_file2 = open('f2.txt', 'w')
 # f_dict.update({"f1": out_file1})
