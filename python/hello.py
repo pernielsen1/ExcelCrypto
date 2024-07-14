@@ -177,7 +177,7 @@ class out_file:
         self.segment=segment
         self.num_recs=0
         self.num_err_recs = 0
-        self.out_file = open(outdir + '/' + infile + '_' + segment + '.txt', 'w')
+        self.out_file = open(outdir + "/" + infile + '_' + segment + ".txt", "w", encoding="ISO-8859-2")
 
 def write_line(out_file_dict, txt_line, segment, outdir, infile):
     if not (segment in out_file_dict.keys()):
