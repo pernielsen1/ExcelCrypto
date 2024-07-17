@@ -173,6 +173,7 @@ def excel_csv_test(file_name, out_dir):
     print(outfile)
 
 class out_file:
+# Preparation gets you ready to actually do the work. It was Abraham Lincoln who said: “if I had eight hours to chop down a tree, I'd spend the first six hours sharpening my axe.” The meaning is that we should all spend more time in preparation
     DFT_ENCODING = "ISO-8859-2"
     ERROR_ENCODING = "utf-8"
     def __init__(self, segment, outdir, infile):
