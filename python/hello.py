@@ -173,7 +173,8 @@ def excel_csv_test(file_name, out_dir):
     print(outfile)
 
 class out_file:
-    
+    DFT_ENCODING = "ISO-8859-2"
+    ERROR_ENCODING = "utf-8"
     def __init__(self, segment, outdir, infile):
         self.segment=segment
         self.num_recs=0
@@ -182,10 +183,16 @@ class out_file:
         self.infile=infile
         self.fileno=0
         self.open_out_file()
-    def open_out_file(self): 
+    def open_out_file(self):
+        if (self.segment == 'ERROR'):
+            file_encoding = self.RROR_ENCODING
+        else:
+            file_encoding = self.DFT_ENCODING
+ 
+        self.fileno=self.fileno + 1
         self.out_file = open(self.outdir + "/" + self.infile + '_' + self.segment + "_" + 
                              str(self.fileno) + "_" + ".txt"
-                             , "w", encoding="ISO-8859-2")
+                             , "w", encoding= file_encoding)
     def get_out_file(self):
         return self.out_file
     
