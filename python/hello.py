@@ -171,7 +171,9 @@ def excel_csv_test(file_name, out_dir):
     write_trailer(outfile, len(df))
 
     print(outfile)
-
+#---------------------------------------------------------------------------------------------------
+# class out_file: Defines object describing storage location naming and number of records per file
+E----------------------------------------------------------------------------------------------------
 class out_file:
 # Preparation gets you ready to actually do the work. It was Abraham Lincoln who said: “if I had eight hours to chop down a tree, I'd spend the first six hours sharpening my axe.” The meaning is that we should all spend more time in preparation
     DFT_ENCODING = "ISO-8859-2"
@@ -184,6 +186,7 @@ class out_file:
         self.infile=infile
         self.fileno=0
         self.open_out_file()
+    # internal function
     def open_out_file(self):
         if (self.segment == 'ERROR'):
             file_encoding = self.RROR_ENCODING
