@@ -173,11 +173,22 @@ def excel_csv_test(file_name, out_dir):
     print(outfile)
 
 class out_file:
+    
     def __init__(self, segment, outdir, infile):
         self.segment=segment
         self.num_recs=0
         self.num_err_recs = 0
-        self.out_file = open(outdir + "/" + infile + '_' + segment + ".txt", "w", encoding="ISO-8859-2")
+        self.outdir = outdir
+        self.infile=infile
+        self.fileno=0
+        self.open_out_file()
+    def open_out_file(self): 
+        self.out_file = open(self.outdir + "/" + self.infile + '_' + self.segment + "_" + 
+                             str(self.fileno) + "_" + ".txt"
+                             , "w", encoding="ISO-8859-2")
+    def get_out_file(self):
+        return self.out_file
+    
 
 def write_line(out_file_dict, txt_line, segment, outdir, infile):
     if not (segment in out_file_dict.keys()):
@@ -195,9 +206,16 @@ def close_files(out_file_dict, out_dir):
         stat_file.write(out_file_obj.segment + ";" + str(out_file_obj.num_recs) 
                         + ";" + str(out_file_obj.num_err_recs) 
                         + "\n")
-    
-    
+import csv    
+def loadcsv_todict():
+    input_dict = csv.DictReader(open("test.csv"), delimiter=";")
+    for row in input_dict:
+        print(row)
+    v = input_dict.get("k1")
+    print("value for k1 is"  + v1 )
+
 print('current directory:' + os.getcwd())
+# loadcsv_todict()
 #file_name = 'cust.xlsx'
 clear_dir(out_dir)
 f_dict=dict()
