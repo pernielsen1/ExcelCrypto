@@ -173,7 +173,7 @@ def excel_csv_test(file_name, out_dir):
     print(outfile)
 #---------------------------------------------------------------------------------------------------
 # class out_file: Defines object describing storage location naming and number of records per file
-E----------------------------------------------------------------------------------------------------
+# E----------------------------------------------------------------------------------------------------
 class out_file:
 # Preparation gets you ready to actually do the work. It was Abraham Lincoln who said: “if I had eight hours to chop down a tree, I'd spend the first six hours sharpening my axe.” The meaning is that we should all spend more time in preparation
     DFT_ENCODING = "ISO-8859-2"
@@ -225,20 +225,53 @@ def loadcsv_todict():
     v = input_dict.get("k1")
     print("value for k1 is"  + v1 )
 
+def dump_file(file_name):
+    file = open(file_name,"r")
+    content = file.read()
+    print(content)
+    file.close()
+    return
+
+from decimal import Decimal, ROUND_HALF_UP
+def load_excel():
+    out_file = out_dir + "/load_excel.csv"
+    df = pd.read_excel(excel_dir + "/" + "test_excel.xlsx")
+    # print(df)
+    # df.to_csv(out_file, sep=";", decimal=",", index=False)
+    # dump_file(out_file)
+    # df['decimal_field'] = df['decimal_field'].apply(lambda x: round(x, 2))
+    # df.to_csv(out_file, sep=";", decimal=",", index=False)
+    # print(df)
+    # dump_file(out_file)
+
+    precision= Decimal("1.00")
+    df['decimal_field'] = df['decimal_field'].apply(lambda x: Decimal(x).quantize(precision))
+    df.to_csv(out_file, sep=";", decimal=",", index=False)
+    print(df)
+    dump_file(out_file)
+    sum_df = df.groupby('account').agg({'decimal_field':'sum', 'int_field':'sum'})
+    print(sum_df)
+    sum_df.to_csv(out_file, sep=";", decimal=",", index=True)
+    dump_file(out_file)
+ 
+
+    return
+
 print('current directory:' + os.getcwd())
+load_excel()
 # loadcsv_todict()
 #file_name = 'cust.xlsx'
-clear_dir(out_dir)
-f_dict=dict()
-write_line(f_dict, "l1" + "\n", "s1", out_dir, "infile")
-write_line(f_dict, "l2" + "\n", "s2", out_dir, "infile")
-write_line(f_dict, "l3" + "\n", "s1", out_dir, "infile")
-write_line(f_dict, "l4" + "\n", "s2", out_dir, "infile")
-close_files(f_dict, out_dir)
+# clear_dir(out_dir)
+# f_dict=dict()
+# write_line(f_dict, "l1" + "\n", "s1", out_dir, "infile")
+# write_line(f_dict, "l2" + "\n", "s2", out_dir, "infile")
+# write_line(f_dict, "l3" + "\n", "s1", out_dir, "infile")
+# 3 write_line(f_dict, "l4" + "\n", "s2", out_dir, "infile")
+# close_files(f_dict, out_dir)
 # # out_file1 = open('f1-txt', 'w')
 # out_file2 = open('f2.txt', 'w')
 # f_dict.update({"f1": out_file1})
-#f_dict.update({"f2": out_file2})
+# f_dict.update({"f2": out_file2})
 # f=f_dict.get("f1")
 # f.write("t1")
 # f=f_dict.get("f2")
