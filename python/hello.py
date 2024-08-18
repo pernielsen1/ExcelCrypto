@@ -231,31 +231,32 @@ def dump_file(file_name):
     print(content)
     file.close()
     return
-
+#-----------------------------
+# testing csv functions 
+#-----------------------------
 from decimal import Decimal, ROUND_HALF_UP
+def write_csv(df, out_file_name, decimal_fields, index_option):
+    out_df = df.copy(deep=True)
+    # now do a workaround so the decimal_fields will be output with a comma (,) instead of point (.)
+    for decimal_field in decimal_fields:
+      out_df[decimal_field] = out_df[decimal_field].map(lambda x: str(x).replace('.', ','))
+ #     sum_df['decimal_field'] = sum_df['decimal_field'].
+  
+    out_df.to_csv(out_file_name, sep=";", decimal=",", index=index_option)
+    dump_file(out_file_name)
+ 
 def load_excel():
     out_file = out_dir + "/load_excel.csv"
     df = pd.read_excel(excel_dir + "/" + "test_excel.xlsx")
-    # print(df)
-    # df.to_csv(out_file, sep=";", decimal=",", index=False)
-    # dump_file(out_file)
-    # df['decimal_field'] = df['decimal_field'].apply(lambda x: round(x, 2))
-    # df.to_csv(out_file, sep=";", decimal=",", index=False)
-    # print(df)
-    # dump_file(out_file)
-
+    # do not trust the floats use Decimal for the numeric fields
     precision= Decimal("1.00")
     df['decimal_field'] = df['decimal_field'].apply(lambda x: Decimal(x).quantize(precision))
-    df.to_csv(out_file, sep=";", decimal=",", index=False)
-    # print(df)
-    dump_file(out_file)
-    sum_df = df.groupby('account').agg({'decimal_field':'sum', 'int_field':'sum'})
-    # now here is a work around for you the decimal fields are object convert to string and replace point (.) with comme(,)
-    sum_df['decimal_field'] = sum_df['decimal_field'].map(lambda x: str(x).replace('.', ','))
-    # print(sum_df)
-    sum_df.to_csv(out_file, sep=";", decimal=",", index=True)
-    dump_file(out_file)
- 
+    df['decimal_field_2'] = df['decimal_field_2'].apply(lambda x: Decimal(x).quantize(precision))
+    sum_df = df.groupby('account').agg({'decimal_field':'sum', 'int_field':'sum', 'decimal_field_2':'sum'})
+    # out details and summary 
+    decimal_fields = ['decimal_field', 'decimal_field_2']
+    write_csv(df, out_file, decimal_fields, False)
+    write_csv(sum_df, out_file, decimal_fields, True)
 
     return
 
