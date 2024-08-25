@@ -18,31 +18,34 @@ def create_tables(cnx):
     drop_table(cnx, "today")
     drop_table(cnx, "yesterday")
     drop_table(cnx, "delta")
+    drop_table(cnx, "new_today")
 
     cursor = cnx.cursor()
-    fields =  "(account varchar(20), amount decimal(11, 2), currency char(3))"
+    fields =  "(account varchar(20), bal_dt  char(10), amount decimal(11, 2), currency char(3))"
     cursor.execute("create table test_db.today " + fields)
     cursor.execute("create table test_db.yesterday " + fields)
     cursor.execute("create table test_db.delta " + fields)
+    cursor.execute("create table test_db.new_today " + fields)
            
 def fill_db(cnx):
     cursor=cnx.cursor()
-    add_yesterday =  ("INSERT INTO yesterday "
-              "(account, amount, currency) "
-              "VALUES (%(account)s, %(amount)s, %(currency)s)")
+    fields =  ( "(account, bal_dt, amount, currency) "
+                "VALUES (%(account)s, %(bal_dt)s, %(amount)s, %(currency)s)"
+            )
    
-    add_today = ("INSERT INTO today "
-              "(account, amount, currency) "
-              "VALUES (%(account)s, %(amount)s, %(currency)s)")
+    add_yesterday =  "INSERT INTO yesterday " + fields
+    add_today = "INSERT INTO today " + fields
    
     for x in range (0, num_recs):
         data_row = {
             'account': 'acc' + str(x + 1),
+            'bal_dt': '2024-12-24',
             'amount': x + 1,
             'currency': 'SEK',
         }
         cursor.execute(add_yesterday, data_row)
-        if ((x+1) % 100 != 0):
+            if ((x+1) % 100 != 0):
+            data_row['bal_dt'] = '2024-12-25'
             cursor.execute(add_today, data_row)
     cnx.commit()
     return
