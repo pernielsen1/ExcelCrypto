@@ -7,6 +7,7 @@ def get_bal_dt(cnx):
     cursor=cnx.cursor()
     cursor.execute("select bal_dt from today")
     for (bal_dt) in cursor:  
+      bal_dt_str = "{}".format(bal_dt) 
       bal_dt_str=str(bal_dt).replace("(", "").replace(")", "").replace("'", "").replace(",", "")
       break   # just needs to read first row
     cursor.reset()  # needed in mysql because we only read the first row.
@@ -37,6 +38,7 @@ def build_delta(cnx):
 #    cursor.execute("insert into yesterday select * from today")
 
     cnx.commit()
+    cursor.close()
 #-------------------------------------------------------------------------
 # here we go
 #-------------------------------------------------------------------------

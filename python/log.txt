@@ -1,0 +1,20 @@
+10 20240901_114151 doing the patch adding patch.txt to today.txt
+80 20240901_114201 send i.e. copying new_today.txt to send
+81 20240901_114201 removing old yesterday:yesterday.txt
+82 20240901_114201 moving today:today.txt to yesterday:yesterday.txt
+00 20240901_114457  new status file created
+10 20240901_114457 doing the patch adding patch.txt to today.txt
+80 20240901_114457 send i.e. copying new_today.txt to send
+81 20240901_114457 removing old yesterday:yesterday.txt
+82 20240901_114457 moving today:today.txt to yesterday:yesterday.txt
+00 20240901_114457 All done we are not critical anymore
+10 20240901_114626 doing the patch adding patch.txt to today.txt
+80 20240901_114626 send i.e. copying new_today.txt to send
+81 20240901_114626 removing old yesterday:yesterday.txt
+82 20240901_114626 moving today:today.txt to yesterday:yesterday.txt
+00 20240901_114626 All done we are not critical anymore
+10 20240901_114700 doing the patch adding patch.txt to today.txt
+80 20240901_114700 send i.e. copying new_today.txt to send
+81 20240901_114700 removing old yesterday:yesterday.txt
+82 20240901_114700 moving today:today.txt to yesterday:yesterday.txt
+00 20240901_114700 All done we are not critical anymore
