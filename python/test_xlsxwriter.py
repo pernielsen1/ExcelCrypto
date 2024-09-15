@@ -13,6 +13,8 @@ def readExcelAndCreateExcel():
     print(df)
     workbook = xlsxwriter.Workbook(out_Excel)
     worksheet = workbook.add_worksheet()
+    format = workbook.add_format()
+    format.set_bg_color('yellow')
     worksheet.write("A1", "Hello world")
     row_no=2
     for index, row in df.iterrows():
@@ -20,6 +22,8 @@ def readExcelAndCreateExcel():
           row_no=row_no + 1
           worksheet.write("C" + str(row_no), col)
           worksheet.write("D" + str(row_no), str(row[col]))
+          worksheet.write("D" + str(row_no), "Action", format)
+          
       # make some space between cases
       row_no=row_no + 1
 
