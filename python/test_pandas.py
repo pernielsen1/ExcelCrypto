@@ -2,88 +2,9 @@ import pandas as pd
 import os
 import shutil
 import datetime
-excel_dir='/mnt/c/users/perni/OneDrive/Documents/PythonTest'
-config_dir='/home/perni/ExcelCrypto/python/config'
-out_dir='/home/perni/ExcelCrypto/python/output'
-big_dir='/home/perni/ExcelCrypto/python/big'
-       
-def clear_dir(folder):
-    for filename in os.listdir(folder):
-        file_path = os.path.join(folder, filename)
-        try:
-            if os.path.isfile(file_path) or os.path.islink(file_path):
-                os.unlink(file_path)
-            elif os.path.isdir(file_path):
-                shutil.rmtree(file_path)
-        except Exception as e:
-            print('Failed to delete %s. Reason: %s' % (file_path, e))
-
+import math
 def write_csv(folder_name, file_name, df):
     df.to_csv(folder_name + '/' + file_name + '.csv', sep=';', encoding='utf-8', index=False)
-    
-
-        
-
-
-def pandas_test():
-    acc =  {'acc': ['A1', 'A2', 'A3'],
-            'pt': ['P10', 'P20', 'P30']}
-    trn =  {'entity':[101, 101, 101], 'acc': ['A1', 'A1', 'A2'], 
-          'amount_gc': [100, 200, 300], 'amount_org':[200, 400, 600], 
-          'dummy_number':[1, 2, 3]}
-    df_trn = pd.DataFrame(data=trn)
-    df_acc = pd.DataFrame(data=acc)
-    print(df_trn)
-    print(df_acc)
-    # example of left join i.e. merge in pandas speak
-    df_acc_trn =pd.merge(df_acc, df_trn, on='acc', how='left', indicator = 'merge_result')
-    print(df_acc_trn)
-    # how to select rows
-    # https://stackoverflow.com/questions/17071871/how-do-i-select-rows-from-a-dataframe-based-on-column-values
-    # select those with value > 100 
-    df_acc_trn_gt100 = df_acc_trn.loc[df_acc_trn['amount_gc'] > 100 ]
-    # select those with value > 100 and account = A1
-    print(df_acc_trn_gt100)
-
-    df_acc_trn_gt100_and_a1 = df_acc_trn.loc[(df_acc_trn['amount_gc'] > 100) & 
-                                             (df_acc_trn['acc'] == 'A1') ]
-
-    print(df_acc_trn_gt100_and_a1)
-    # example of summarising (group by)
-    df_trn_sum = df_trn.groupby(['entity', 'acc']).agg({'amount_gc':'sum','amount_org':'sum'})
-    print(df_trn_sum)
-
-
-def csv_test(out_dir):
-    test_dict =  {'acc': ['A1', 'A2', 'A3'],
-            'amount_org':[200.12, 400.23, 600], 
-            'dummy_number':[1, 2, 3]}
-    df = pd.DataFrame(data=test_dict)
-
-    print(df.dtypes)
-    outfile=out_dir + "/test.csv"
-    df.to_csv(outfile, index=False, sep=";", decimal=",")
-    print(outfile)
-
-
-def excel_csv_test(file_name, out_dir):
-    excel_name=excel_dir + "/" + file_name
-    print(excel_name)
-    df=pd.read_excel(excel_name, sheet_name='POST')
-    print(df.dtypes)
-    outfile=out_dir + "/test.csv"
-    df.to_csv(outfile, index=False, sep=";", decimal=",")
-
-    print(outfile)
-
-def dump_file(file_name):
-    file = open(file_name,"r")
-    content = file.read()
-    print(content)
-    file.close()
-    return
- 
-    return
 
 #-----------------------------------------------------------------------------
 # util_pandas_info:  print info of a data frame
@@ -105,9 +26,16 @@ def print_df(msg, df):
 # test_csv:  load the csv file as all string and let's see what we get
 #------------------------------------------------------------------------------
 indir = "input"
-def test_csv():
-    df_in= pd.read_csv(indir + "/" + "csv_input.csv", sep=";", dtype=str)
-    util_pandas_info(df_in)
+def load_csv():
+    df= pd.read_csv(indir + "/" + "csv_input.csv", sep=";", dtype=str)
+    all_keys= pd.read_csv(indir + "/" + "csv_all_keys.csv", sep=";", dtype=str)
+
+    return df, all_keys
+
+#-----------------------------------------------------------------------------
+# test_apply: test different kind of applys
+#------------------------------------------------------------------------------
+def test_apply(df_in):
     print("before", df_in)
     df_in['num_as_string'] = df_in.apply(strip_zero, axis=1)
     print("after strip_zero", df_in)
@@ -117,7 +45,62 @@ def test_csv():
     print("after lambda remove", df_in) 
     df_in['num_as_string'] = df_in['num_as_string'].apply(lambda x: x.zfill(9))   
     print("after lambda add", df_in) 
+
+#-----------------------------------------------------------------------------
+# test_groupby: test different kind of applys
+#------------------------------------------------------------------------------
+def test_groupby(df_in):
+    # create a copy of df_in since we will change it
+    df_new = df_in.copy(deep=True)
+    # first convert the amount string to float since we loaded as string float requires nums as 1.23 not 1,23
+    # TBD - add decimals example
+    df_new['amount'] = df_new['amount'].apply(lambda x: x.replace(',','.'))
+    df_new['amount'] = df_new['amount'].astype(float)
+    df_grp = df_new.groupby('num_as_string').agg(
+                            num_duplicates= ('key', 'count'),
+                            sum_amount= ('amount', 'sum')
+                        )
+    util_pandas_info(df_grp)
+    print(df_grp)
+    return df_grp
+#-----------------------------------------------------------------------------
+# test_merge: test merge (join) 
+#------------------------------------------------------------------------------
+def test_merge(df_in, df_grp, all_keys):
+    df_res = pd.merge(  left=df_in, right=df_grp,
+                        how='left',
+                        left_on='num_as_string', 
+                        right_on='num_as_string',
+                        suffixes=('','_r'),
+                        indicator=True   
+                    )
+    # since we now have a _merge field we take it away before adding next data frame.
+    df_res = df_res.drop(['_merge'], axis=1)                
+    # now set it together with all keys.
+    df_res =  pd.merge(  left=all_keys, right=df_res,
+                        how='left',
+                        left_on='key', 
+                        right_on='key',
+                        suffixes=('','_r'),
+                        indicator=True   
+                    )                 
+    print(df_res)
+    # now we have a number of NaN's - not usefull in later processing so clean up example with lambdas... 
+    # df_res['num_as_string'] = df_res['num_as_string'].apply(lambda x : f"" if pd.isna(x) else f"{x}")
+    # df_res['amount'] = df_res['amount'].apply(lambda x : f"0" if pd.isna(x) else f"{x}")
+    df_res[['num_as_string']] = df_res[['num_as_string']].fillna(value='')
+    df_res[['num_duplicates', 'sum_amount', 'amount']] = df_res[['num_duplicates','sum_amount', 'amount']].fillna(value=0)
+    print(df_res)
+
+    # example of selecting only part i.e. let's take the left only
+    left_only=df_res[df_res['_merge'] == 'left_only']
+    print(left_only)
+
 #
 # here we go
 print('current directory:' + os.getcwd())
-test_csv()
+df_in, all_keys =load_csv()
+util_pandas_info(df_in)
+test_apply(df_in)  
+df_grp=test_groupby(df_in)
+test_merge(df_in,  df_grp, all_keys)
