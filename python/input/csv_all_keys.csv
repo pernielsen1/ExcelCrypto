@@ -1,8 +1,8 @@
-key;Descriotion
-k1;Key 1
-k2;Key 2
-k3;Key 3
-k4;Key 4
-k5;Key 5
-x0;Key x0 not in details
-x1;key x1 not in details
+key;Description;num_as_string
+k1;Key 1;1234
+k2;Key 2;2345
+k3;Key 3;3456
+k4;Key 4;4567
+k5;Key 5;5678
+x0;Key x0 not in details;6789
+x1;key x1 not in details;7890
