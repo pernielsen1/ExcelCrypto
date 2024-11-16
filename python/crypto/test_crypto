@@ -55,28 +55,16 @@ def run_test(crypto_keys, test_case):
     if (alg == 'DES' or alg == 'AES'):
         key_name = test_case["key_name"]
         key_value = crypto_keys[key_name]
-
-        iv = test_case['IV']
-        mode = test_case["mode"]
-        operation = test_case['operation']
- 
-        if (operation == "encrypt"):
-            data = test_case["plain"]
+        cipher_obj = create_DES_cipher_obj(test_case['mode'], key_value, test_case['IV']) 
+        if (test_case['operation'] == "encrypt"):
+            data_bin = bytes.fromhex(test_case["plain"])
+            result_hex = cipher_obj.encrypt(data_bin).hex()
         else:
-            data = test_case["cipher"]
-        data_bin = bytes.fromhex(data)
-        cipher_obj = create_DES_cipher_obj(mode, key_value, iv)
-        if (operation == "encrypt"):
-            cipher_msg = cipher_obj.encrypt(data_bin)
-            result_hex = cipher_msg.hex()
-        if (operation == "decrypt"):
-            cipher_msg = cipher_obj.decrypt(data_bin)
-            result_hex = cipher_msg.hex()
+            data_bin = bytes.fromhex(test_case["cipher"])
+            result_hex = cipher_obj.decrypt(data_bin).hex()
 
     if (alg == "XOR"):
-        s1 = test_case["s1"]
-        s2 = test_case["s2"]
-        result_hex = hex_string_xor(s1, s2) 
+        result_hex = hex_string_xor(test_case["s1"], test_case["s2"]) 
 
     if (result_hex == expected_result):
        result = "Success"
