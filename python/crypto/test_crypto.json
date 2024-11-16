@@ -1,0 +1,43 @@
+{
+    "server": "127.0.0.1",
+    "port": "5000",
+
+    "crypto_keys" :  {
+        "k1": "6bc1bee22e409f96e93d7e117393172a",
+        "k2": "42c1bee22e409f96e93d7e117393172a"		
+    }, 
+
+    
+    "tests": {
+        "0001": {
+            "description":"Test first des encrypt",
+            "alg":"DES",
+            "mode":"ECB",
+            "operation":"encrypt",
+            "key_name":"k1",
+            "plain":"6bc1bee22e409f96e93d7e117393172a", 
+            "IV": "",
+            "expected_result" : "D83CC5F9634983CC8D92FF5B4A8DAD34",
+            "expected_result_x" : "D83CC5F9634983CC8D92FF5B4A8DAD34E5DFE1913DC6285"
+        },
+
+        "0002": {
+            "description":"Test first des decrypt",
+            "alg":"DES",
+            "mode":"ECB",
+            "operation":"decrypt",
+            "key_name":"k1",
+            "cipher": "D83CC5F9634983CC8D92FF5B4A8DAD34",
+            "IV": "",
+            "expected_result" : "6bc1bee22e409f96e93d7e117393172a"
+        },
+        "0003": {
+            "description":"Test Xor test",
+            "alg":"XOR",
+            "s1":"07",
+            "s2":"0a",
+            "expected_result" : "0d"
+        }
+
+    }
+}

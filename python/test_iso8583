@@ -1,0 +1,31 @@
+# pip install pyiso8583
+# https://pyiso8583.readthedocs.io/en/latest/?badge=latest
+
+import pprint
+import iso8583
+from iso8583.specs import default_ascii as spec
+
+def do_it():
+    encoded_raw = b'02004000000000000000101234567890'
+    decoded, encoded = iso8583.decode(encoded_raw, spec)
+    pprint.pp(decoded)
+    pprint.pp(encoded)
+
+def num_fixed(s, len):
+    return s.zfill(len)[:len]
+
+def build_msg():
+    decoded = {'t': '0100'}
+    encoded_raw, encoded = iso8583.encode(decoded, spec)
+    pprint.pp(encoded)
+    decoded['2'] = '1234567890'
+    decoded['3'] = '111111'
+    decoded['4'] = num_fixed('1234',12)
+    decoded['21'] = '021'
+    encoded_raw, encoded = iso8583.encode(decoded, spec)
+    pprint.pp(encoded)
+
+
+# here we go
+do_it()
+build_msg()

@@ -14,9 +14,15 @@ def write_csv(df, file_name):
 # util_pandas_info:  print info of a data frame
 #-----------------------------------------------------------------------------
 def util_pandas_info(df):
-    
-    print(df.dtypes)
-
+    for series_name, series in df.items():
+        print(series_name)
+        print(series)
+    for column in df:
+        print(df[column].name)
+        if (df[column].dtype == "object"):
+            print("It's an object")
+            print(type(df[column].dtype).__name__ )
+        
 def strip_zero(row):
     return row['num_as_string'].lstrip('0')
 
@@ -69,7 +75,6 @@ def test_groupby(df_in):
                             num_duplicates= ('key', 'count'),
                             sum_amount= ('amount', 'sum')
                         )
-    util_pandas_info(df_grp)
     print(df_grp)
     return df_grp
 #-----------------------------------------------------------------------------
@@ -122,3 +127,4 @@ util_pandas_info(df_in)
 test_apply(df_in)  
 df_grp=test_groupby(df_in)
 test_merge(df_in,  df_grp, all_keys)
+util_pandas_info(df_in)
