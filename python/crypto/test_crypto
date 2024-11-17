@@ -25,7 +25,7 @@ def do_AES(operation, key_value, mode, data, iv):
     data_bin = bytes.fromhex(data)
 
     if (operation == "encrypt"):
-        return cipher_obj.encrypt(data_bin).hex()
+        return cipher_obj.encrypt(pad(data_bin, AES.block_size)).hex()
     else:
         return unpad(cipher_obj.decrypt(data_bin), len(key_bin)).hex() 
 
@@ -44,7 +44,8 @@ def do_DES(operation, key_value, mode, data, iv):
     if (mode == "ECB"):
        cipher_obj = DES3.new(key_token, DES3.MODE_ECB)
     if (mode == "CBC"):
-        cipher_obj = DES3.new(key_token, DES3.MODE_CBC)
+        iv_bin = bytes.fromhex(iv)
+        cipher_obj = DES3.new(key_token, DES3.MODE_CBC, iv=iv_bin)
 
     data_bin = bytes.fromhex(data)
     if (operation == "encrypt"):
