@@ -3,8 +3,9 @@
     "port": "5000",
 
     "crypto_keys" :  {
-        "k1": "6bc1bee22e409f96e93d7e117393172a",
-        "k2": "42c1bee22e409f96e93d7e117393172a"		
+        "DES_k1": "6bc1bee22e409f96e93d7e117393172a",
+        "AES_k2": "2b7e151628aed2a6abf7158809cf4f3c",
+        "k3": "42c1bee22e409f96e93d7e117393172a"		
     }, 
 
     
@@ -14,8 +15,8 @@
             "alg":"DES",
             "mode":"ECB",
             "operation":"encrypt",
-            "key_name":"k1",
-            "plain":"6bc1bee22e409f96e93d7e117393172a", 
+            "key_name":"DES_k1",
+            "data":"6bc1bee22e409f96e93d7e117393172a", 
             "IV": "",
             "expected_result" : "D83CC5F9634983CC8D92FF5B4A8DAD34",
             "expected_result_x" : "D83CC5F9634983CC8D92FF5B4A8DAD34E5DFE1913DC6285"
@@ -26,8 +27,8 @@
             "alg":"DES",
             "mode":"ECB",
             "operation":"decrypt",
-            "key_name":"k1",
-            "cipher": "D83CC5F9634983CC8D92FF5B4A8DAD34",
+            "key_name":"DES_k1",
+            "data": "D83CC5F9634983CC8D92FF5B4A8DAD34",
             "IV": "",
             "expected_result" : "6bc1bee22e409f96e93d7e117393172a"
         },
@@ -37,7 +38,29 @@
             "s1":"07",
             "s2":"0a",
             "expected_result" : "0d"
+        },
+        "0004": {
+            "description":"Test first AES encrypt",
+            "alg":"AES",
+            "mode":"CBC",
+            "operation":"encrypt",
+            "key_name":"AES_k2",
+            "data":"6bc1bee22e409f96e93d7e117393172a", 
+            "IV": "000102030405060708090A0B0C0D0E0F",
+            "expected_result" : "7649ABAC8119B246CEE98E9B12E9197D"
+        },
+
+        "0005": {
+            "description":"Test first AES decrypt",
+            "alg":"AES",
+            "mode":"CBC",
+            "operation":"decrypt",
+            "key_name":"AES_k2",
+            "data": "7649ABAC8119B246CEE98E9B12E9197D8964E0B149C10B7B682E6E39AAEB731C",
+            "IV": "000102030405060708090A0B0C0D0E0F",
+            "expected_result" : "6bc1bee22e409f96e93d7e117393172a"
         }
+
 
     }
 }

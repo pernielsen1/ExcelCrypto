@@ -3,40 +3,58 @@
 import os
 import json
 from Crypto.Cipher import DES3
+from Crypto.Cipher import AES
+from Crypto.Util.Padding import pad
+from Crypto.Util.Padding import unpad
+
 config_dir = 'crypto/'
 config_file = 'test_crypto.json'
 
-#-----------------------------------------------------------------------------------
-# DES_adjust_to_3DES : If key is single des or double des convert to a tripple DES
-#-----------------------------------------------------------------------------------
-def DES_adjust_to_3DES(key):
-    if len(key) == 48 : 
-          return key; # alread 3 * 0 bytes i.e. 48 chars
-    if len(key) == 32 :
-         return key + key[0: 16]  # double des set k3 = K1 
-    if len(key) == 16:
-         return key + key + key # single des set k2=k1, k3=k1
-    print("illegal key len")
-    return key
 #-------------------------------------------------------------
-# create_DES_cipher_obj()
+# do_aes
 #-------------------------------------------------------------
-def create_DES_cipher_obj(mode, key_value, iv):
-    key_value = DES_adjust_to_3DES(key_value)
+def do_AES(operation, key_value, mode, data, iv):
+    key_bin = bytes.fromhex(key_value)
+    if (mode == "ECB"):
+        cipher_obj= AES.new(key_bin, AES.MODE_ECB)
+    if (mode == "CBC"):
+        iv_bin = bytes.fromhex(iv)
+        cipher_obj= AES.new(key_bin, AES.MODE_CBC, iv=iv_bin)
+
+    data_bin = bytes.fromhex(data)
+
+    if (operation == "encrypt"):
+        return cipher_obj.encrypt(data_bin).hex()
+    else:
+        return unpad(cipher_obj.decrypt(data_bin), len(key_bin)).hex() 
+
+#-------------------------------------------------------------
+# do_DES
+#-------------------------------------------------------------
+def do_DES(operation, key_value, mode, data, iv):
+    if len(key_value) == 32 :
+       key_value = key_value + key_value[0: 16]  # double des set k3 = K1 
+    if len(key_value) == 16:
+       key_value = key_value + key_value + key_value  # single des set k2=k1, k3=k1
+
     key_bin = bytes.fromhex(key_value)
     key_token = DES3.adjust_key_parity(key_bin)
 
     if (mode == "ECB"):
-        mode_bin = DES3.MODE_ECB
-        return DES3.new(key_token, mode_bin)
-    if (mode == "CCB"):
-        iv_bin = bytes.fromhex(iv)  
-        mode_bin = DES3.MODE_CCB
+       cipher_obj = DES3.new(key_token, DES3.MODE_ECB)
+    if (mode == "CBC"):
+        cipher_obj = DES3.new(key_token, DES3.MODE_CBC)
 
-#---------------------------------------------
+    data_bin = bytes.fromhex(data)
+    if (operation == "encrypt"):
+        return cipher_obj.encrypt(data_bin).hex()
+    else:
+        return cipher_obj.decrypt(data_bin).hex()
+
+#---------------------------------------------------------------------
 # hex_string_xor(s1, s2)
 # https://stackoverflow.com/questions/52851023/python-3-xor-bytearrays
-#---------------------------------------------
+#---------------------------------------------------------------------
 def hex_string_xor(s1, s2):
     one = bytes.fromhex(s1)
     two = bytes.fromhex(s2)
@@ -55,14 +73,12 @@ def run_test(crypto_keys, test_case):
     if (alg == 'DES' or alg == 'AES'):
         key_name = test_case["key_name"]
         key_value = crypto_keys[key_name]
-        cipher_obj = create_DES_cipher_obj(test_case['mode'], key_value, test_case['IV']) 
-        if (test_case['operation'] == "encrypt"):
-            data_bin = bytes.fromhex(test_case["plain"])
-            result_hex = cipher_obj.encrypt(data_bin).hex()
-        else:
-            data_bin = bytes.fromhex(test_case["cipher"])
-            result_hex = cipher_obj.decrypt(data_bin).hex()
-
+        if (alg == 'DES'):
+            result_hex = do_DES(test_case['operation'], key_value, test_case['mode'], 
+                                        test_case['data'], test_case['IV'])
+        if (alg == 'AES'): 
+            result_hex = do_AES(test_case['operation'], key_value, test_case['mode'], 
+                                        test_case['data'], test_case['IV'])
     if (alg == "XOR"):
         result_hex = hex_string_xor(test_case["s1"], test_case["s2"]) 
 
@@ -91,5 +107,4 @@ def run_tests(config):
 # here we go
 print('current directory:' + os.getcwd())
 config = load_config()
- 
 run_tests(config)
