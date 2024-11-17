@@ -2,6 +2,7 @@
 # pip install pycryptodome
 import os
 import json
+import base64
 from Crypto.Cipher import DES3
 from Crypto.Cipher import AES
 from Crypto.Util.Padding import pad
@@ -60,6 +61,18 @@ def hex_string_xor(s1, s2):
     two = bytes.fromhex(s2)
     one_xor_two = bytes(a ^ b for (a, b) in zip(one, two))
     return one_xor_two.hex()
+#---------------------------------------------------------------------
+# do_base64(opereation, data)
+#---------------------------------------------------------------------
+def do_base64(operation, data):
+    if (operation == "encode"):
+        data_bin = bytes.fromhex(data)
+        base64_bytes = base64.b64encode(data_bin) 
+        return  base64_bytes.decode("ascii")
+    if (operation == "decode"):
+        base64_bytes = data.encode("ascii")
+        res_bytes = base64.b64decode(base64_bytes)
+        return res_bytes.hex()
 
 #-------------------------------------------
 # run_test: Run a crypto test case
@@ -67,26 +80,30 @@ def hex_string_xor(s1, s2):
 def run_test(crypto_keys, test_case):
     description = test_case['description']
     alg =  test_case['alg']
-    expected_result = test_case["expected_result"].lower()
-    result_hex = ""
+    expected_result = test_case["expected_result"]
+    if (alg != 'BASE64'):
+        expected_result = expected_result.lower()
+    result_str = ""
 
     if (alg == 'DES' or alg == 'AES'):
         key_name = test_case["key_name"]
         key_value = crypto_keys[key_name]
         if (alg == 'DES'):
-            result_hex = do_DES(test_case['operation'], key_value, test_case['mode'], 
+            result_str = do_DES(test_case['operation'], key_value, test_case['mode'], 
                                         test_case['data'], test_case['IV'])
         if (alg == 'AES'): 
-            result_hex = do_AES(test_case['operation'], key_value, test_case['mode'], 
+            result_str = do_AES(test_case['operation'], key_value, test_case['mode'], 
                                         test_case['data'], test_case['IV'])
     if (alg == "XOR"):
-        result_hex = hex_string_xor(test_case["s1"], test_case["s2"]) 
+        result_str = hex_string_xor(test_case["s1"], test_case["s2"]) 
+    if (alg == "BASE64"):
+        result_str = do_base64(test_case["operation"], test_case["data"]) 
 
-    if (result_hex == expected_result):
+    if (result_str == expected_result):
        result = "Success"
     else:
         result = "Fail"
-    print("test:" + description + " result:" + result + " result_hex:" + result_hex + " expected:" + expected_result)
+    print("test:" + description + " result:" + result + " result_str:" + result_str + " expected:" + expected_result)
 #-----------------------------------------------------------------------------------------
 # load config ... load the test_rest.json who has the test cases and connection details.
 #-----------------------------------------------------------------------------------------
