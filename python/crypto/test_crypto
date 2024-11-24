@@ -14,23 +14,73 @@ from Crypto.Util.Padding import pad
 from Crypto.Util.Padding import unpad
 config_dir = 'crypto/'
 config_file = 'test_crypto.json'
-segment_to_run = 'EMV'
+segment_to_run = 'ALL'
 crypto_handle = None
+#------------- 
+# just a dummy global object
+#-------------------------------------
 class crypto_hsm:
-#    name=""
     def __new__(cls, *args, **kwargs):
-        print("1. Create a new instance of crypto_hsm.")
         return super().__new__(cls)
     def __init__(self, name):
-        print("2. Initialize the new instance of crypto_hsm")
         self.name = name
-
     def get_name(self):
         return self.name
-
     def __new__(cls, *args, **kwargs):
         return super().__new__(cls)
 
+    #-------------------------------------------------------------
+    # do_DES
+    #-------------------------------------------------------------
+    def do_DES(self, operation, key_value, mode, data, iv):
+        if len(key_value) == 32 :
+            key_value = key_value + key_value[0: 16]  # double des set k3 = K1 
+
+        if (len(key_value) == 16):
+            des_obj = DES
+        else:
+            des_obj = DES3
+
+        key_token = bytes.fromhex(key_value)
+
+        if (mode == "ECB" and operation != 'mac'):
+            cipher_obj = des_obj.new(key_token, des_obj.MODE_ECB)
+        if (mode == "CBC" and operation != 'mac'):
+            iv_bin = bytes.fromhex(iv)
+            cipher_obj = des_obj.new(key_token, des_obj.MODE_CBC, iv=iv_bin)
+
+        data_bin = bytes.fromhex(data)
+        if (operation == "encrypt"):
+            return cipher_obj.encrypt(data_bin).hex()
+        if (operation == "decrypt"):
+            return cipher_obj.decrypt(data_bin).hex()
+        if (operation == "mac"):
+            cobj = CMAC.new(key_token, ciphermod=des_obj)
+            cobj.update(data_bin)
+            return cobj.hexdigest()
+        # still here something wrong 
+        return "Invalid operation"
+    #-------------------------------------------------------------
+    # do_aes
+    #-------------------------------------------------------------
+    def do_AES(self, operation, key_value, mode, data, iv):
+        key_bin = bytes.fromhex(key_value)
+        if (mode == "ECB"):
+            cipher_obj= AES.new(key_bin, AES.MODE_ECB)
+        if (mode == "CBC"):
+            iv_bin = bytes.fromhex(iv)
+            cipher_obj= AES.new(key_bin, AES.MODE_CBC, iv=iv_bin)
+
+        data_bin = bytes.fromhex(data)
+
+        if (operation == "encrypt"):
+            return cipher_obj.encrypt(pad(data_bin, AES.block_size)).hex()
+        if (operation == "decrypt"):
+            return unpad(cipher_obj.decrypt(data_bin), len(key_bin)).hex() 
+        if (operation == "mac"):
+            return "MAC to be done"
+        # still here something wrong 
+        return "Invalid operation"
 
 #-------------------------------------------------------------
 # udk
@@ -39,9 +89,9 @@ def do_udk(imk, pan, psn):
     pan_psn = pan + psn;
     pan_psn = pan_psn[len(pan_psn) -16: len(pan_psn)]
     iv = "0000000000000000"
-    left  = do_DES('encrypt', imk, 'ECB', pan_psn, iv)
+    left  = crypto_handle.do_DES('encrypt', imk, 'ECB', pan_psn, iv)
     pan_psn_xor = hex_string_xor(pan_psn, "FFFFFFFFFFFFFFFF")
-    right = do_DES('encrypt', imk, 'ECB', pan_psn_xor, iv)
+    right = crypto_handle.do_DES('encrypt', imk, 'ECB', pan_psn_xor, iv)
     return left + right
 #-------------------------------------------------------------
 # session_key
@@ -52,11 +102,11 @@ def do_session_key(imk, pan, psn, atc):
     f1 = atc + "F0" + "0000000000"
     f2 = atc + "0F" + "0000000000"
     iv = "0000000000000000"
-    left  = do_DES('encrypt', udk, 'ECB', f1, iv)
-    right = do_DES('encrypt', udk, 'ECB', f2, iv)
+    left  = crypto_handle.do_DES('encrypt', udk, 'ECB', f1, iv)
+    right = crypto_handle.do_DES('encrypt', udk, 'ECB', f2, iv)
     return left + right
 #------------------------------------------------------------
-#
+# mypad: do an EMV pad
 #------------------------------------------------------------
 def mypad(data, block_size):
     num_to_pad = block_size - (len(data) % block_size)
@@ -78,7 +128,7 @@ def man_mac(key, data):
     iv = "0000000000000000"
     data_block = data[0:16]
     for i in range(num_iter):
-        data_block = do_DES('encrypt', left, 'ECB', data_block, iv)
+        data_block = crypto_handle.do_DES('encrypt', left, 'ECB', data_block, iv)
         xor1 = data_block
         start = (i + 1) * 16
         xor2 = data[start: start  + 16]
@@ -94,7 +144,7 @@ def do_arqc(imk, pan, psn, atc, data, add80):
     left = sk[0:16]
     # do a normal DES CBC encrypt of all blocks except the last block
     mac_data = data[0: len(data) - 16]
-    enc2 = do_DES('encrypt', left, 'CBC', mac_data, iv)
+    enc2 = crypto_handle.do_DES('encrypt', left, 'CBC', mac_data, iv)
     # take last block of encrypted data and xor with the last block of the data (last 8 bytes)
     last_block_in_enc = enc2[len(enc2) - 16:len(enc2)]
     last_plain_block = data[len(data)-16:len(data)]
@@ -103,10 +153,11 @@ def do_arqc(imk, pan, psn, atc, data, add80):
   
     print("enc_mac:" + enc_mac)
     print("man_mac:" + man_mac_val)
-    arqc = do_DES('encrypt', sk, 'CBC', enc_mac, iv)
+    arqc = crypto_handle.do_DES('encrypt', sk, 'CBC', enc_mac, iv)
     print("arqc:" + arqc)
 
     return arqc 
+
 #-------------------------------------------------------------
 # do_arpc
 #-------------------------------------------------------------
@@ -115,65 +166,7 @@ def do_arpc(imk, pan, psn, atc, arqc, csu):
     sk = do_session_key(imk, pan, psn, atc)
     x = csu + "000000000000"
     y = hex_string_xor(arqc, x)
-    return do_DES('encrypt', sk, 'ECB', y, "")
- 
-#-------------------------------------------------------------
-# do_aes
-#-------------------------------------------------------------
-def do_AES(operation, key_value, mode, data, iv):
-    key_bin = bytes.fromhex(key_value)
-    if (mode == "ECB"):
-        cipher_obj= AES.new(key_bin, AES.MODE_ECB)
-    if (mode == "CBC"):
-        iv_bin = bytes.fromhex(iv)
-        cipher_obj= AES.new(key_bin, AES.MODE_CBC, iv=iv_bin)
-
-    data_bin = bytes.fromhex(data)
-
-    if (operation == "encrypt"):
-        return cipher_obj.encrypt(pad(data_bin, AES.block_size)).hex()
-    if (operation == "decrypt"):
-        return unpad(cipher_obj.decrypt(data_bin), len(key_bin)).hex() 
-    if (operation == "mac"):
-        return "MAC to be done"
-    # still here something wrong 
-    return "Invalid operation"
-#-------------------------------------------------------------
-# do_DES
-#-------------------------------------------------------------
-def do_DES(operation, key_value, mode, data, iv):
-    if len(key_value) == 32 :
-       key_value = key_value + key_value[0: 16]  # double des set k3 = K1 
-
-    if (len(key_value) == 16):
-        des_obj = DES
-        # create dummy value for part 2 so we can use DES3.adjust_key_parity
-        key_bin2 = bytes.fromhex(key_value + "1C1C1C1C1C1C1C1C" + key_value)
-        key_token = DES3.adjust_key_parity(key_bin2)
-        key_hex = key_token.hex()[0:16]
-        key_token = bytes.fromhex(key_hex)
-    else:
-        des_obj = DES3
-        key_token = DES3.adjust_key_parity(bytes.fromhex(key_value))
-
- 
-    if (mode == "ECB" and operation != 'mac'):
-       cipher_obj = des_obj.new(key_token, des_obj.MODE_ECB)
-    if (mode == "CBC" and operation != 'mac'):
-        iv_bin = bytes.fromhex(iv)
-        cipher_obj = des_obj.new(key_token, des_obj.MODE_CBC, iv=iv_bin)
-
-    data_bin = bytes.fromhex(data)
-    if (operation == "encrypt"):
-        return cipher_obj.encrypt(data_bin).hex()
-    if (operation == "decrypt"):
-        return cipher_obj.decrypt(data_bin).hex()
-    if (operation == "mac"):
-        cobj = CMAC.new(key_token, ciphermod=des_obj)
-        cobj.update(data_bin)
-        return cobj.hexdigest()
-    # still here something wrong 
-    return "Invalid operation"
+    return crypto_handle.do_DES('encrypt', sk, 'ECB', y, "")
 
 #---------------------------------------------------------------------
 # hex_string_xor(s1, s2)
@@ -185,81 +178,77 @@ def hex_string_xor(s1, s2):
     one_xor_two = bytes(a ^ b for (a, b) in zip(one, two))
     return one_xor_two.hex()
 #---------------------------------------------------------------------
-# do_base64(opereation, data)
+# do_base64(opereation, data)  - data is hex string and returned as base or vise versa
 #---------------------------------------------------------------------
 def do_base64(operation, data):
     if (operation == "encode"):
-        data_bin = bytes.fromhex(data)
-        base64_bytes = base64.b64encode(data_bin) 
-        return  base64_bytes.decode("ascii")
+        return base64.b64encode(bytes.fromhex(data)).decode("ascii")
     if (operation == "decode"):
-        base64_bytes = data.encode("ascii")
-        res_bytes = base64.b64decode(base64_bytes)
-        return res_bytes.hex()
+        return base64.b64decode(data).hex()
 
 #-------------------------------------------
 # run_test: Run a crypto test case
 #-------------------------------------------
-def run_test(crypto_keys, test_case):
-    description = test_case['description']
-    alg =  test_case['alg']
-    expected_result = test_case["expected_result"]
+def run_test(crypto_keys, tc):
+    description = tc['description']
+    alg =  tc['alg']
+    expected_result = tc["expected_result"]
     if (alg != 'BASE64'):
         expected_result = expected_result.lower()
     result_str = ""
-
     if (alg == 'DES' or alg == 'AES'):
-        key_name = test_case["key_name"]
-        key_value = crypto_keys[key_name]
         if (alg == 'DES'):
-            result_str = do_DES(test_case['operation'], key_value, test_case['mode'], 
-                                        test_case['data'], test_case['IV'])
+            result_str = crypto_handle.do_DES(tc['operation'], crypto_keys[tc["key_name"]], tc['mode'], tc['data'], tc['IV'])
         if (alg == 'AES'): 
-            result_str = do_AES(test_case['operation'], key_value, test_case['mode'], 
-                                        test_case['data'], test_case['IV'])
+            result_str = crypto_handle.do_AES(tc['operation'], crypto_keys[tc["key_name"]], tc['mode'], tc['data'], tc['IV'])
     if (alg == "XOR"):
-        result_str = hex_string_xor(test_case["s1"], test_case["s2"]) 
+        result_str = hex_string_xor(tc["s1"], tc["s2"]) 
     if (alg == "BASE64"):
-        result_str = do_base64(test_case["operation"], test_case["data"]) 
+        result_str = do_base64(tc["operation"], tc["data"]) 
     if (alg == "UDK"):
-        key_name = test_case["key_name"]
-        key_value = crypto_keys[key_name]
-        result_str = do_udk(key_value, test_case['PAN'], test_case['PSN'])
+        result_str = do_udk(crypto_keys[tc["key_name"]], tc['PAN'], tc['PSN'])
     if (alg == "SESSION_KEY"):
-        key_value = crypto_keys[test_case["key_name"]]
-        result_str = do_session_key(key_value, test_case['PAN'], test_case['PSN'], test_case['ATC'])
+        result_str = do_session_key(crypto_keys[tc["key_name"]], tc['PAN'], tc['PSN'], tc['ATC'])
     if (alg == "ARQC"):
-        key_value = crypto_keys[test_case["key_name"]]
-        result_str = do_arqc(key_value, test_case['PAN'], test_case['PSN'], test_case['ATC'], test_case['data'], True)
+        result_str = do_arqc(crypto_keys[tc["key_name"]], tc['PAN'], tc['PSN'], tc['ATC'], tc['data'], True)
     if (alg == "ARPC"):
-        key_value = crypto_keys[test_case["key_name"]]
-        result_str = do_arpc(key_value, test_case['PAN'], test_case['PSN'], 
-                             test_case['ATC'],test_case['ARQC'], test_case['CSU'])
-            
+        result_str = do_arpc(crypto_keys[tc["key_name"]], tc['PAN'], tc['PSN'], tc['ATC'],tc['ARQC'], tc['CSU'])
     if (result_str == expected_result):
-       print("passed:" + description)
+        return True, "passed:" + description
     else:
-        print("failed:" + description + " result_str:" + result_str + " expected:" + expected_result)
+        desc = "failed:" + description + " result_str:" + result_str + " expected:" + expected_result
+        print(desc)
+        return False, "failed:" + description + " result_str:" + result_str + " expected:" + expected_result
 #-----------------------------------------------------------------------------------------
 # load config ... load the test_rest.json who has the test cases and connection details.
 #-----------------------------------------------------------------------------------------
 def load_config():
     with open(config_dir +  config_file, 'r') as file:
-        json_data = file.read()
-        return json.loads(json_data)
-#-----------------------------------------------------------------------------------------
+        return json.loads(file.read())    
+#--------------------------------------------------------------------------------------
 # run_tests:  Run all tests in the config['tests'l
 #-----------------------------------------------------------------------------------------
 def run_tests(config, segment):
+    num_passed = 0
+    num_failed = 0       
+    num_cases =  0
     crypto_keys = config['crypto_keys']
     for key in config['tests']:
-        if (segment == "ALL" or key ==   segment ):
+        if (segment == "ALL" or str(key) ==   segment ):
             segment_selected =  str(key)    
             for testkey in config['tests'][segment_selected]:
-                test_case_name= str(testkey)
-                test_case = config['tests'][segment_selected][test_case_name]
-                run_test(crypto_keys, test_case)
-        
+                num_cases = num_cases + 1
+                tc_name= str(testkey)
+                tc = config['tests'][segment_selected][tc_name]
+                result, msg = run_test(crypto_keys, tc)
+                if (result):
+                    num_passed = num_passed + 1
+                else:
+                    print("failed" + msg )
+                    num_failed = num_failed + 1
+  
+    print("num_cases:" + str(num_cases) + " num_passed:" + str(num_passed) + " num_failed:" + str(num_failed))
+
 # here we go
 print('current directory:' + os.getcwd())
 config = load_config()
