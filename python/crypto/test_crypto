@@ -15,6 +15,23 @@ from Crypto.Util.Padding import unpad
 config_dir = 'crypto/'
 config_file = 'test_crypto.json'
 segment_to_run = 'EMV'
+crypto_handle = None
+class crypto_hsm:
+#    name=""
+    def __new__(cls, *args, **kwargs):
+        print("1. Create a new instance of crypto_hsm.")
+        return super().__new__(cls)
+    def __init__(self, name):
+        print("2. Initialize the new instance of crypto_hsm")
+        self.name = name
+
+    def get_name(self):
+        return self.name
+
+    def __new__(cls, *args, **kwargs):
+        return super().__new__(cls)
+
+
 #-------------------------------------------------------------
 # udk
 #-------------------------------------------------------------
@@ -90,6 +107,16 @@ def do_arqc(imk, pan, psn, atc, data, add80):
     print("arqc:" + arqc)
 
     return arqc 
+#-------------------------------------------------------------
+# do_arpc
+#-------------------------------------------------------------
+def do_arpc(imk, pan, psn, atc, arqc, csu):
+    print("in ARPC accessing global hsm:" + crypto_handle.get_name())
+    sk = do_session_key(imk, pan, psn, atc)
+    x = csu + "000000000000"
+    y = hex_string_xor(arqc, x)
+    return do_DES('encrypt', sk, 'ECB', y, "")
+ 
 #-------------------------------------------------------------
 # do_aes
 #-------------------------------------------------------------
@@ -204,7 +231,11 @@ def run_test(crypto_keys, test_case):
     if (alg == "ARQC"):
         key_value = crypto_keys[test_case["key_name"]]
         result_str = do_arqc(key_value, test_case['PAN'], test_case['PSN'], test_case['ATC'], test_case['data'], True)
-
+    if (alg == "ARPC"):
+        key_value = crypto_keys[test_case["key_name"]]
+        result_str = do_arpc(key_value, test_case['PAN'], test_case['PSN'], 
+                             test_case['ATC'],test_case['ARQC'], test_case['CSU'])
+            
     if (result_str == expected_result):
        print("passed:" + description)
     else:
@@ -232,5 +263,5 @@ def run_tests(config, segment):
 # here we go
 print('current directory:' + os.getcwd())
 config = load_config()
-
+crypto_handle = crypto_hsm("my_hsm")
 run_tests(config, segment_to_run)
