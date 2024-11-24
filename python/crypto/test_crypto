@@ -57,20 +57,17 @@ def mypad(data, block_size):
 #-------------------------------------------------------------
 def man_mac(key, data):
     left = key[0:16]
-
     num_iter = int(len(data) / 16) - 1
     iv = "0000000000000000"
-    iv_null = iv
     data_block = data[0:16]
     for i in range(num_iter):
-        data_block = do_DES('encrypt', left, 'ECB', data_block, iv_null)
+        data_block = do_DES('encrypt', left, 'ECB', data_block, iv)
         xor1 = data_block
         start = (i + 1) * 16
         xor2 = data[start: start  + 16]
         data_block = hex_string_xor(xor1, xor2)
     return data_block
             
-    return iv
 def do_arqc(imk, pan, psn, atc, data, add80):
     sk = do_session_key(imk, pan, psn, atc)
     if (add80):
@@ -86,10 +83,12 @@ def do_arqc(imk, pan, psn, atc, data, add80):
     last_plain_block = data[len(data)-16:len(data)]
     enc_mac = hex_string_xor(last_plain_block, last_block_in_enc)
     man_mac_val = man_mac(sk, data)
-
+  
     print("enc_mac:" + enc_mac)
     print("man_mac:" + man_mac_val)
-    arqc = do_DES('encrypt', sk, 'CBC', man_mac_val, iv)
+    arqc = do_DES('encrypt', sk, 'CBC', enc_mac, iv)
+    print("arqc:" + arqc)
+
     return arqc 
 #-------------------------------------------------------------
 # do_aes
@@ -205,8 +204,6 @@ def run_test(crypto_keys, test_case):
     if (alg == "ARQC"):
         key_value = crypto_keys[test_case["key_name"]]
         result_str = do_arqc(key_value, test_case['PAN'], test_case['PSN'], test_case['ATC'], test_case['data'], True)
-   #     result_str = result_str + ":"  +  do_arqc(key_value, test_case['PAN'], 
-   #                                               test_case['PSN'], test_case['ATC'], test_case['data'], True)
 
     if (result_str == expected_result):
        print("passed:" + description)
