@@ -8,9 +8,7 @@
 # add label in OAEP test cases plus Hash function... 
 # https://github.com/wolf43/AES-GCM-example/blob/master/aes_gcm.py
 # ToDo:
-#   add label in OAEP test cases plus Hash function... 
-#   add aeå field---
-
+#   add label in OAEP test cases plus AAD  function... 
 
 import os
 import json
@@ -27,14 +25,16 @@ from Crypto.Hash import CMAC
 from Crypto.Util.Padding import pad
 from Crypto.Util.Padding import unpad
 
-
+#------------------ GLOBALS ---------------------------
 config_dir = 'crypto/'
 config_file = 'test_crypto.json'
 segment_to_run = 'ECC'
 segment_to_run = 'ALL'
 
 crypto_handle = None # just a dummy global object
-#-------------------------------------
+#------------------------------------------------------------
+# crypto_jsd - defining interface to crypto package
+#-------------------------------------------------------------
 class crypto_hsm:
     def __new__(cls, *args, **kwargs):
         return super().__new__(cls)
