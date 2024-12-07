@@ -6,21 +6,8 @@
         "AES_k2": "2b7e151628aed2a6abf7158809cf4f3c",
         "IMK_k1": "0123456789abcdeffedcba9876543210",
         "AES_GCM": "8914fdf7b77a70a521931ba7994a306d629db66863c063077c6e8f5381fe9434",
-
-        "Bob_Private":  {
-            "pem_x": "MHcCAQEEIAlB93bN6RnTwuYebq9AIEUYTWLCQR20FKG/Jy9gCMrcoAoGCCqGSM49AwEHoUQDQgAEkerBdkk6Lw/+77HVzmcVOZsZgXoH1qmeEZb+cQUwg6bUihbEFQrIRSaIf/VQNUDqNZGFzdTOeNoEzVlbyrLPcw==",
-            "pem": "-----BEGIN EC PRIVATE KEY-----MHcCAQEEIAlB93bN6RnTwuYebq9AIEUYTWLCQR20FKG/Jy9gCMrcoAoGCCqGSM49AwEHoUQDQgAEkerBdkk6Lw/+77HVzmcVOZsZgXoH1qmeEZb+cQUwg6bUihbEFQrIRSaIf/VQNUDqNZGFzdTOeNoEzVlbyrLPcw==-----END EC PRIVATE KEY-----",
-         
-            "priv" : "0941F776CDE919D3C2E61E6EAF402045184D62C2411DB414A1BF272F6008CADC",
-            "pub" :	"91EAC176493A2F0FFEEFB1D5CE6715399B19817A07D6A99E1196FE71053083A6D48A16C4150AC84526887FF5503540EA359185CDD4CE78DA04CD595BCAB2CF73",
-            "curve" : "PRIME256V1"
-        },
-        "Alice_Public": {
-            "pem_x" : "MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEdlDsUIpBcMsRcjYeW9wmo9YKFSsfLRg0TGlm2uUMenxxGRiiKKF/BB18TO06cZJ92HGbnEdfh9Rygd3o5XaUlg==",
-            "pem" : "-----BEGIN PUBLIC KEY-----MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEdlDsUIpBcMsRcjYeW9wmo9YKFSsfLRg0TGlm2uUMenxxGRiiKKF/BB18TO06cZJ92HGbnEdfh9Rygd3o5XaUlg==-----END PUBLIC KEY-----",
-            "pub" : "7650EC508A4170CB1172361E5BDC26A3D60A152B1F2D18344C6966DAE50C7A7C711918A228A17F041D7C4CED3A71927DD8719B9C475F87D47281DDE8E5769496",
-            "curve" : "PRIME256V1"
-        },
+        "ECC_Bob_Private": "-----BEGIN EC PRIVATE KEY-----MHcCAQEEIAlB93bN6RnTwuYebq9AIEUYTWLCQR20FKG/Jy9gCMrcoAoGCCqGSM49AwEHoUQDQgAEkerBdkk6Lw/+77HVzmcVOZsZgXoH1qmeEZb+cQUwg6bUihbEFQrIRSaIf/VQNUDqNZGFzdTOeNoEzVlbyrLPcw==-----END EC PRIVATE KEY-----",
+        "ECC_Alice_Public": "-----BEGIN PUBLIC KEY-----MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEdlDsUIpBcMsRcjYeW9wmo9YKFSsfLRg0TGlm2uUMenxxGRiiKKF/BB18TO06cZJ92HGbnEdfh9Rygd3o5XaUlg==-----END PUBLIC KEY-----",
         "RSA_Alice_Public": "-----BEGIN PUBLIC KEY-----MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAowEAssi1xLGgl3Mrttp/F/Fcv3wR7teT8OEcgWp68cs9ySyEhtx3cjvnXoVDJDXLC1DO/DIKiJunqyQVoOUR6l/k+OKgqNFgcRPy3g/8SpYp/VY4w5oaWx+4nB42Fww8d8spjkW9h6vM9cfzaTjWJMZgsxLDA+6K/mPNG50sUYPZX+PxqAVQTzWqYbJCeelJGH9wiWgVPC7RqE+NFqKeT1HVfplvOquwyBhVLYuph8poNle+Op3xBb0yjqb28m58tu0T6JJHRpm58ZFGCMTjE9rfztmsQlJfOm8tEi4dl8zKqxKcI9zqBikKUepPYLLdsviE/PTF5w4zZtkaHQ/2XwIDAQAB-----END PUBLIC KEY-----",
         "RSA_Alice_Private":" -----BEGIN PRIVATE KEY-----MIIEvgIBADANBgkqhkiG9w0BAQEFAASCBKgwggSkAgEAAoIBAQCjAQCyyLXEsaCXcyu22n8X8Vy/fBHu15Pw4RyBanrxyz3JLISG3HdyO+dehUMkNcsLUM78MgqIm6erJBWg5RHqX+T44qCo0WBxE/LeD/xKlin9VjjDmhpbH7icHjYXDDx3yymORb2Hq8z1x/NpONYkxmCzEsMD7or+Y80bnSxRg9lf4/GoBVBPNaphskJ56UkYf3CJaBU8LtGoT40Wop5PUdV+mW86q7DIGFUti6mHymg2V746nfEFvTKOpvbybny27RPokkdGmbnxkUYIxOMT2t/O2axCUl86by0SLh2XzMqrEpwj3OoGKQpR6k9gst2y+IT89MXnDjNm2RodD/ZfAgMBAAECggEBAIcDTpvHSV9pLTYkrAGhywF+5q6oSoZFQ4GSQ7UiCEF8cWnPGNpHhBw3Z/XPdYRplguCXF9h532tR9ymX8/LzOIPma1YsXADNNmUh2bNYNA6vv7aStwhKVFu3c9Z6r1+YhtrSLlSJKFaeMLfYks2S5FcSz4n/SWlkLUS3xHPRqUguQhNaz2wokQG0gYzDHIMJvHyL0EgE9w+LZ2jnMQH6jm58tsGgLXsuK41oAR7cfFHpyBomQLmWfbQBGpBAQrIzEImlg2H7BJgyej6eT2NTGcRcT6F7Nw7t/pcCwqGtQnOPrGzBEPyQuhwSCzrF2Apj2uxpxRpZDaIjFFcjAlUAtECgYEA0bT3s5SY6NxS3gO47leHVyVlfYfE/WKDENe/4tW+OSldmZbvzm8sAYDslUR3mtvZ0Fb34hhLQNslSlFys2col439KUVr1Fa0us5JXXSYupG2sicxbgN1j6e+i5xciNtq5pdNc7jAUdS7F9HoAjkvkoT++dZVZJWR8+gSDLkJgYcCgYEAxvy9MCm/7NQ5atSFM/JtX0Ch2GR0giJCgZ24q0J6byqyke4ZKdEn7RAfvw04Q9PHKm/YslabnNlI0+qcRQkJOSl4h4eMI0XHWa/E/GQE8wzs3NO95uxCNYdEhMZRVKvEOPAJxrZDh9uyKpihTjWkcwT1i6Gwk5igsbVWf230+mkCgYAWpsyGuktWA85zqsVEAXJeCG0RBSRTFlv/6r4QW3QjqoMwvuwCSWHge7OSYAXnVU4OwgYehu9B/ynlAC06ka8Bx9WLqrL+CauV7ghgruJ8bJbmYXNmZbtCHCVp4SbhpYnDhJ5aHJ+xdyAKb6L28oRf+DuucudgaQON7AhfFXGgawKBgFZbdVejptGHQOvmE3D58xF1oUeiQRYA/E/4PR7GGRCJvTmr1Wvag7NUXhKyEAsPq831AFxVTe+CNSMTHIKxazlNkCtxXhYowF1h9OF8HtHEeD9V/YJsYkeMzuW4k69lZCE5u2Rr0V7yr53g45Bno1jvfAj/QPytLoAxLLrc44aRAoGBAJje8xMhvLu6Ygom1srHqSmfmcHUbeZAFP5/K5Ej0lhBya+B/3ImW7BOm10OX2UVSkIID4Qz8KRDTNtdl2kS2duHhPGG61vqYWq9O8WR83iJNuNkD4qq/gfx0WnY0YyYpdmXw0vy1Vc5RYBRkstkyHcHzfR/OIXga34bdHMqOrtE-----END PRIVATE KEY-----",
         "k3": "42c1bee22e409f96e93d7e117393172a"		
@@ -49,23 +36,20 @@
  
         },
         
-        "ECC_RAW": {
-            "DERIVE_SHARED_SECRET": {
+        "ECC": {
+            "ECC_RAW_SHARED_SECRET": {
                 "description":"Derive a shared secret raw key without KDF",
                 "alg":"ECC_RAW",
-                "private_key":"Bob_Private",
-                "public_key":"Alice_Public",
+                "private_key":"ECC_Bob_Private",
+                "public_key":"ECC_Alice_Public",
                 "expected_result":"CA3C2944EF4D7FCACFA06AE491CE303FAE8F7CDA53F99F8C5F71B4FCBCB8BC50"
-            }
-        },
-        "ECC_KDF": {
-            "DERIVE_SHARED_SECRET": {
-                "description":"Derive a shared secret raw key without KDF",
+            },
+            "ECC_WITH_KDF": {
+                "description":"Derive a shared secret raw key with KDF",
                 "alg":"ECC_KDF",
-                "private_key":"Bob_Private",
-                "public_key":"Alice_Public",
-                "kdf":"HASH",
-                "hash":"SHA256",
+                "private_key":"ECC_Bob_Private",
+                "public_key":"ECC_Alice_Public",
+                "algo":"SHA256",
                 "prepend": "00000001",
                 "append": "416C696365426F62",
                 "expected_result" : "479E0D7DB701F3638A948A174104C71665A9FE1EAB623C302A797DB292D0F5EB" 
@@ -113,6 +97,15 @@
                 "expected_result" : "A2092CCC0C25006B" 
             }
 
+        },
+        "HASH": {
+            "SHA256": {
+                "description":"Test HASH sha256",
+                "alg":"HASH",
+                "mode":"SHA256",
+                "data":"00000001CA3C2944EF4D7FCACFA06AE491CE303FAE8F7CDA53F99F8C5F71B4FCBCB8BC504865726520697320736F6D65206F7468657220696E666F0A", 
+                "expected_result" : "4DE4852062066E36E495826C56C95F94DE0FA8AA88CADE83A30A657E79BA8DF6"
+            }
         },
         "DES_BASIC": {
             "0001": {

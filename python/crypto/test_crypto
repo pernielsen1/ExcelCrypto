@@ -3,12 +3,14 @@
 # https://pycryptodome.readthedocs.io/en/latest/src/hash/cmac.html
 # https://medium.com/baybaynakit/emv-key-types-and-derivation-d0cca3ab2c6d
 # https://medium.com/baybaynakit/how-to-use-emv-keys-9a1f908b12b3
-# ToDo
+# https://stackoverflow.com/questions/6055763/how-can-i-do-an-iso-9797-1-mac-with-triple-des-in-cx§
+# https://neapay.com/online-tools/calculate-cryptogram.html?amountValue=000000005100&amountoValue=000000000000&countryCodeValue=0792&tvrValue=0000208000¤cyCodeValue=0949&trandateValue=170419&tranTypeValue=00&unValue=B49762F2&aipValue=3900&atcValue=0001&iadValue=0105A040000020000000000000000080&padValue=8000000000000000&ivValue=00000000000000000000000000000000&mkValue=0123456789abcdeffedcba9876543210&panValue=5656781234567891 00&psnValue=01
 # add label in OAEP test cases plus Hash function... 
-# add the KDF version to ECC prepend and append
-# AES GCM example
 # https://github.com/wolf43/AES-GCM-example/blob/master/aes_gcm.py
-# hash example 
+# ToDo:
+#   add label in OAEP test cases plus Hash function... 
+#   add aeå field---
+
 
 import os
 import json
@@ -21,8 +23,6 @@ from Crypto.PublicKey import RSA
 from Crypto.Cipher import PKCS1_OAEP
 from Crypto.Hash import SHAKE256, SHA256
 from Crypto.Protocol.DH import key_agreement
-
-
 from Crypto.Hash import CMAC
 from Crypto.Util.Padding import pad
 from Crypto.Util.Padding import unpad
@@ -30,7 +30,9 @@ from Crypto.Util.Padding import unpad
 
 config_dir = 'crypto/'
 config_file = 'test_crypto.json'
-segment_to_run = 'AES_BASIC'
+segment_to_run = 'ECC'
+segment_to_run = 'ALL'
+
 crypto_handle = None # just a dummy global object
 #-------------------------------------
 class crypto_hsm:
@@ -42,7 +44,6 @@ class crypto_hsm:
         return self.name
     def __new__(cls, *args, **kwargs):
         return super().__new__(cls)
-
     #-------------------------------------------------------------
     # do_DES
     #-------------------------------------------------------------
@@ -84,7 +85,6 @@ class crypto_hsm:
             cipher_hex = data[0: len(data) - 32]
             data_bin = bytes.fromhex(cipher_hex)
             tag_bin = bytes.fromhex(tag_hex)
-
         else:
             data_bin = bytes.fromhex(data)
 
@@ -117,22 +117,35 @@ class crypto_hsm:
         # still here something wrong 
         return "Invalid operation"
     #-------------------------------------------------------------
-    # do_ECC
+    # do_hash
     #-------------------------------------------------------------
-    def kdf_raw(self, x):
-         return x
+    def do_hash(self, mode, data):
+        bin_data = bytes.fromhex(data)
+        if (mode == "SHA256"):
+            hash_object = SHA256.new(bin_data)
+        return hash_object.hexdigest()
 
     #-------------------------------------------------------------
     # do_ECC
     #-------------------------------------------------------------
+    def kdf_raw(self, x):
+         return x
+    #-------------------------------------------------------------
+    # do_ECC
+    #-------------------------------------------------------------
     def do_ECC_shared_secret(self, priv_key, pub_key):
-        priv_pem  = clean_pem(priv_key['pem'])
-        pub_pem  = clean_pem(pub_key['pem'])
-        pub_k =  ECC.import_key(base64.b64decode(pub_pem))
-        priv_k = ECC.import_key(base64.b64decode(priv_pem))
-        # derive the raw shared secret
+        pub_k =  ECC.import_key(base64.b64decode(clean_pem(pub_key)))
+        priv_k = ECC.import_key(base64.b64decode(clean_pem(priv_key)))
+        # derive the raw shared secret with dummy kdf function (kdf_raw)
         session_key = key_agreement(static_priv=priv_k, static_pub=pub_k, kdf=self.kdf_raw)
         return session_key.hex()
+    #-------------------------------------------------------------
+    # do_ECC
+    #-------------------------------------------------------------
+    def do_ECC_with_kdf(self, priv_key, pub_key, algo, prepend, append):
+        session_key = self.do_ECC_shared_secret(priv_key, pub_key)
+        data_to_hash = prepend + session_key + append
+        return self.do_hash(algo, data_to_hash)
     #-------------------------------------------------------------
     # do_RSA
     #-------------------------------------------------------------
@@ -157,7 +170,6 @@ def clean_pem(s):
     s = s.replace("-----END PUBLIC KEY-----", "")
     s = s.replace("-----BEGIN PRIVATE KEY-----", "")
     s = s.replace("-----END PRIVATE KEY-----", "")
-  
     return s
 
 #-------------------------------------------------------------
@@ -197,8 +209,6 @@ def mypad(data, block_size):
         return data + pad_data
 #-------------------------------------------------------------
 # do_arqc
-# https://stackoverflow.com/questions/6055763/how-can-i-do-an-iso-9797-1-mac-with-triple-des-in-cx§
-# https://neapay.com/online-tools/calculate-cryptogram.html?amountValue=000000005100&amountoValue=000000000000&countryCodeValue=0792&tvrValue=0000208000¤cyCodeValue=0949&trandateValue=170419&tranTypeValue=00&unValue=B49762F2&aipValue=3900&atcValue=0001&iadValue=0105A040000020000000000000000080&padValue=8000000000000000&ivValue=00000000000000000000000000000000&mkValue=0123456789abcdeffedcba9876543210&panValue=5656781234567891 00&psnValue=01
 #-------------------------------------------------------------
 def man_mac(key, data):
     left = key[0:16]
@@ -228,19 +238,13 @@ def do_arqc(imk, pan, psn, atc, data, add80):
     last_plain_block = data[len(data)-16:len(data)]
     enc_mac = hex_string_xor(last_plain_block, last_block_in_enc)
     man_mac_val = man_mac(sk, data)
-  
-    print("enc_mac:" + enc_mac)
-    print("man_mac:" + man_mac_val)
     arqc = crypto_handle.do_DES('encrypt', sk, 'CBC', enc_mac, iv)
-    print("arqc:" + arqc)
-
     return arqc 
 
 #-------------------------------------------------------------
 # do_arpc
 #-------------------------------------------------------------
 def do_arpc(imk, pan, psn, atc, arqc, csu):
-    print("in ARPC accessing global hsm:" + crypto_handle.get_name())
     sk = do_session_key(imk, pan, psn, atc)
     x = csu + "000000000000"
     y = hex_string_xor(arqc, x)
@@ -269,7 +273,6 @@ def do_base64(operation, data):
 #-------------------------------------------
 def run_test(crypto_keys, tc):
     description = tc['description']
-    description
     alg =  tc['alg']
     expected_result = tc["expected_result"]
     if (alg != 'BASE64'):
@@ -295,9 +298,9 @@ def run_test(crypto_keys, tc):
     if (alg == "ECC_RAW"):
         result_str = crypto_handle.do_ECC_shared_secret(crypto_keys[tc["private_key"]], crypto_keys[tc["public_key"]]) 
     if (alg == "ECC_KDF"):
-        result_str= "Not implemented"
-#        result_str = crypto_handle.do_ECC(crypto_keys[tc["private_key"]], crypto_keys[tc["public_key"]], tc["kdf"], tc["hash"], 
-#                tc["prepend"], tc["append"]) 
+        result_str = crypto_handle.do_ECC_with_kdf(crypto_keys[tc["private_key"]], crypto_keys[tc["public_key"]], tc['algo'], tc['prepend'], tc['append'])
+    if (alg == "HASH"):
+        result_str = crypto_handle.do_hash(tc['mode'],tc['data'])
     if (alg == "RSA"):
        result_str = crypto_handle.do_RSA(tc['operation'], crypto_keys[tc["key"]], tc['data']) 
        if (tc['operation'] == "encrypt"):
