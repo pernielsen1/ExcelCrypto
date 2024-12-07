@@ -1,0 +1,7 @@
+{
+"type":"ECDH",
+"priv":"c0b12ad4583f2d58223beabe6855",
+"pub":"04830c52932b85fd82bce1357ebdccb4af0900c4dd8d0c719a140e39e3",
+"curveOID":"0605672b010406",
+"curve":"wap"
+}

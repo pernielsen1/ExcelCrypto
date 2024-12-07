@@ -6,18 +6,25 @@
 import os
 import json
 import base64
+from Crypto.Cipher import AES
 from Crypto.Cipher import DES
 from Crypto.Cipher import DES3
-from Crypto.Cipher import AES
+from Crypto.PublicKey import ECC
+from Crypto.PublicKey import RSA
+from Crypto.Cipher import PKCS1_OAEP
+from Crypto.Hash import SHAKE256, SHA256
+from Crypto.Protocol.DH import key_agreement
+
+
 from Crypto.Hash import CMAC
 from Crypto.Util.Padding import pad
 from Crypto.Util.Padding import unpad
+
+
 config_dir = 'crypto/'
 config_file = 'test_crypto.json'
-segment_to_run = 'ALL'
-crypto_handle = None
-#------------- 
-# just a dummy global object
+segment_to_run = 'RSA'
+crypto_handle = None # just a dummy global object
 #-------------------------------------
 class crypto_hsm:
     def __new__(cls, *args, **kwargs):
@@ -81,6 +88,49 @@ class crypto_hsm:
             return "MAC to be done"
         # still here something wrong 
         return "Invalid operation"
+    #-------------------------------------------------------------
+    # do_ECC
+    #-------------------------------------------------------------
+    def kdf_raw(self, x):
+         return x
+
+    #-------------------------------------------------------------
+    # do_ECC
+    #-------------------------------------------------------------
+    def do_ECC_shared_secret(self, priv_key, pub_key):
+        priv_pem  = clean_pem(priv_key['pem'])
+        pub_pem  = clean_pem(pub_key['pem'])
+        pub_k =  ECC.import_key(base64.b64decode(pub_pem))
+        priv_k = ECC.import_key(base64.b64decode(priv_pem))
+        # derive the raw shared secret
+        session_key = key_agreement(static_priv=priv_k, static_pub=pub_k, kdf=self.kdf_raw)
+        return session_key.hex()
+    #-------------------------------------------------------------
+    # do_RSA
+    #-------------------------------------------------------------
+    def do_RSA(self, operation, key, data):
+        # Pycryptodome only supports the OAEP version
+        label=""
+        hash_obj = SHA256.new()
+        rsa_key = RSA.import_key(base64.b64decode(clean_pem(key)))
+        cipher_rsa = PKCS1_OAEP.new(key=rsa_key, hashAlgo=hash_obj, label=label)
+        data_bytes = bytes.fromhex(data)
+        if (operation == "encrypt"):
+            return cipher_rsa.encrypt(data_bytes).hex()
+        if (operation == "decrypt"):
+            return cipher_rsa.decrypt(data_bytes).hex()
+
+        return "Wrong operation"
+
+def clean_pem(s):
+    s = s.replace("-----BEGIN EC PRIVATE KEY-----", "")
+    s = s.replace("-=-----END EC PRIVATE KEY-----", "")
+    s = s.replace("-----BEGIN PUBLIC KEY-----", "")
+    s = s.replace("-----END PUBLIC KEY-----", "")
+    s = s.replace("-----BEGIN PRIVATE KEY-----", "")
+    s = s.replace("-----END PRIVATE KEY-----", "")
+  
+    return s
 
 #-------------------------------------------------------------
 # udk
@@ -191,6 +241,7 @@ def do_base64(operation, data):
 #-------------------------------------------
 def run_test(crypto_keys, tc):
     description = tc['description']
+    description
     alg =  tc['alg']
     expected_result = tc["expected_result"]
     if (alg != 'BASE64'):
@@ -213,11 +264,21 @@ def run_test(crypto_keys, tc):
         result_str = do_arqc(crypto_keys[tc["key_name"]], tc['PAN'], tc['PSN'], tc['ATC'], tc['data'], True)
     if (alg == "ARPC"):
         result_str = do_arpc(crypto_keys[tc["key_name"]], tc['PAN'], tc['PSN'], tc['ATC'],tc['ARQC'], tc['CSU'])
+    if (alg == "ECC_RAW"):
+        result_str = crypto_handle.do_ECC_shared_secret(crypto_keys[tc["private_key"]], crypto_keys[tc["public_key"]]) 
+    if (alg == "ECC_KDF"):
+        result_str= "Not implemented"
+#        result_str = crypto_handle.do_ECC(crypto_keys[tc["private_key"]], crypto_keys[tc["public_key"]], tc["kdf"], tc["hash"], 
+#                tc["prepend"], tc["append"]) 
+    if (alg == "RSA"):
+       result_str = crypto_handle.do_RSA(tc['operation'], crypto_keys[tc["key"]], tc['data']) 
+       if (tc['operation'] == "encrypt"):
+            # OAEP has random element so we have to decrypt to verify with verify_key against plain message
+            result_str = crypto_handle.do_RSA("decrypt", crypto_keys[tc["verify_key"]], result_str)
+
     if (result_str == expected_result):
         return True, "passed:" + description
     else:
-        desc = "failed:" + description + " result_str:" + result_str + " expected:" + expected_result
-        print(desc)
         return False, "failed:" + description + " result_str:" + result_str + " expected:" + expected_result
 #-----------------------------------------------------------------------------------------
 # load config ... load the test_rest.json who has the test cases and connection details.
@@ -238,13 +299,12 @@ def run_tests(config, segment):
             segment_selected =  str(key)    
             for testkey in config['tests'][segment_selected]:
                 num_cases = num_cases + 1
-                tc_name= str(testkey)
-                tc = config['tests'][segment_selected][tc_name]
+                tc = config['tests'][segment_selected][str(testkey)]
                 result, msg = run_test(crypto_keys, tc)
                 if (result):
                     num_passed = num_passed + 1
                 else:
-                    print("failed" + msg )
+                    print(msg )
                     num_failed = num_failed + 1
   
     print("num_cases:" + str(num_cases) + " num_passed:" + str(num_passed) + " num_failed:" + str(num_failed))
