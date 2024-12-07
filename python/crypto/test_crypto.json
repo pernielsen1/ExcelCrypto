@@ -5,6 +5,8 @@
         "DES_k1": "2b7e151628aed2a6abf7158809cf4f3c", 
         "AES_k2": "2b7e151628aed2a6abf7158809cf4f3c",
         "IMK_k1": "0123456789abcdeffedcba9876543210",
+        "AES_GCM": "8914fdf7b77a70a521931ba7994a306d629db66863c063077c6e8f5381fe9434",
+
         "Bob_Private":  {
             "pem_x": "MHcCAQEEIAlB93bN6RnTwuYebq9AIEUYTWLCQR20FKG/Jy9gCMrcoAoGCCqGSM49AwEHoUQDQgAEkerBdkk6Lw/+77HVzmcVOZsZgXoH1qmeEZb+cQUwg6bUihbEFQrIRSaIf/VQNUDqNZGFzdTOeNoEzVlbyrLPcw==",
             "pem": "-----BEGIN EC PRIVATE KEY-----MHcCAQEEIAlB93bN6RnTwuYebq9AIEUYTWLCQR20FKG/Jy9gCMrcoAoGCCqGSM49AwEHoUQDQgAEkerBdkk6Lw/+77HVzmcVOZsZgXoH1qmeEZb+cQUwg6bUihbEFQrIRSaIf/VQNUDqNZGFzdTOeNoEzVlbyrLPcw==-----END EC PRIVATE KEY-----",
@@ -214,7 +216,30 @@
                 "data": "3AD77BB40D7A3660A89ECAF32466EF97A254BE88E037DDD9D79FB6411C3F9DF8",
                 "IV": "",
                 "expected_result" : "6bc1bee22e409f96e93d7e117393172a"
+            },
+            "0005": {
+                "description":"First AES GCM encrypt",
+                "alg":"AES",
+                "mode":"GCM",
+                "operation":"encrypt",
+                "key_name":"AES_GCM",
+                "data": "486920416C69636520776861742061626F75742064696E6E657220746F6E69676874203F",
+                "IV": "07e07d3ac1aaedf2fdfe5a4e",
+                "tag_len":16,
+                "expected_result" : "0E3FF3977F23489D4D320C8303F11E8A559ED3E16E5648E3049AC65A876E64A7A77C3C643737EBE03DD4BE8A901274F3C6F2D949"             
+            },
+            "0006": {
+                "description":"First AES GCM decrypt",
+                "alg":"AES",
+                "mode":"GCM",
+                "operation":"decrypt",
+                "key_name":"AES_GCM",
+                "data" : "0E3FF3977F23489D4D320C8303F11E8A559ED3E16E5648E3049AC65A876E64A7A77C3C643737EBE03DD4BE8A901274F3C6F2D949",             
+                "IV": "07e07d3ac1aaedf2fdfe5a4e",
+                "tag_len":16,
+                "expected_result" : "486920416C69636520776861742061626F75742064696E6E657220746F6E69676874203F"
             }
+
         },
   
         "CRYPTO_BASIC": {

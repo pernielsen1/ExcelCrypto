@@ -3,6 +3,13 @@
 # https://pycryptodome.readthedocs.io/en/latest/src/hash/cmac.html
 # https://medium.com/baybaynakit/emv-key-types-and-derivation-d0cca3ab2c6d
 # https://medium.com/baybaynakit/how-to-use-emv-keys-9a1f908b12b3
+# ToDo
+# add label in OAEP test cases plus Hash function... 
+# add the KDF version to ECC prepend and append
+# AES GCM example
+# https://github.com/wolf43/AES-GCM-example/blob/master/aes_gcm.py
+# hash example 
+
 import os
 import json
 import base64
@@ -23,7 +30,7 @@ from Crypto.Util.Padding import unpad
 
 config_dir = 'crypto/'
 config_file = 'test_crypto.json'
-segment_to_run = 'RSA'
+segment_to_run = 'AES_BASIC'
 crypto_handle = None # just a dummy global object
 #-------------------------------------
 class crypto_hsm:
@@ -72,18 +79,39 @@ class crypto_hsm:
     #-------------------------------------------------------------
     def do_AES(self, operation, key_value, mode, data, iv):
         key_bin = bytes.fromhex(key_value)
+        if (operation == "decrypt" and mode== "GCM"):
+            tag_hex = data[len(data) - 32: len(data)]
+            cipher_hex = data[0: len(data) - 32]
+            data_bin = bytes.fromhex(cipher_hex)
+            tag_bin = bytes.fromhex(tag_hex)
+
+        else:
+            data_bin = bytes.fromhex(data)
+
         if (mode == "ECB"):
             cipher_obj= AES.new(key_bin, AES.MODE_ECB)
         if (mode == "CBC"):
             iv_bin = bytes.fromhex(iv)
             cipher_obj= AES.new(key_bin, AES.MODE_CBC, iv=iv_bin)
-
-        data_bin = bytes.fromhex(data)
-
+        if (mode == "GCM"):
+            # Encrypt using AES GCM
+            nonce_bin = bytes.fromhex(iv)
+            cipher_obj = AES.new(key_bin, AES.MODE_GCM, nonce = nonce_bin)
+            # cipher.update(aad)
+          
         if (operation == "encrypt"):
-            return cipher_obj.encrypt(pad(data_bin, AES.block_size)).hex()
+            if mode != "GCM":
+                return cipher_obj.encrypt(pad(data_bin, AES.block_size)).hex()
+            else:
+                ciphertext, tag = cipher_obj.encrypt_and_digest(data_bin)
+                return ciphertext.hex() + tag.hex()
+        
         if (operation == "decrypt"):
-            return unpad(cipher_obj.decrypt(data_bin), len(key_bin)).hex() 
+            if mode != "GCM":
+                return unpad(cipher_obj.decrypt(data_bin), len(key_bin)).hex() 
+            else:
+                return cipher_obj.decrypt_and_verify(data_bin, tag_bin).hex()
+ 
         if (operation == "mac"):
             return "MAC to be done"
         # still here something wrong 
