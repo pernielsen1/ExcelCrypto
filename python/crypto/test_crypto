@@ -5,10 +5,10 @@
 # https://medium.com/baybaynakit/how-to-use-emv-keys-9a1f908b12b3
 # https://stackoverflow.com/questions/6055763/how-can-i-do-an-iso-9797-1-mac-with-triple-des-in-cx§
 # https://neapay.com/online-tools/calculate-cryptogram.html?amountValue=000000005100&amountoValue=000000000000&countryCodeValue=0792&tvrValue=0000208000¤cyCodeValue=0949&trandateValue=170419&tranTypeValue=00&unValue=B49762F2&aipValue=3900&atcValue=0001&iadValue=0105A040000020000000000000000080&padValue=8000000000000000&ivValue=00000000000000000000000000000000&mkValue=0123456789abcdeffedcba9876543210&panValue=5656781234567891 00&psnValue=01
-# add label in OAEP test cases plus Hash function... 
 # https://github.com/wolf43/AES-GCM-example/blob/master/aes_gcm.py
 # ToDo:
 #   add label in OAEP test cases plus AAD  function... 
+
 
 import os
 import json
