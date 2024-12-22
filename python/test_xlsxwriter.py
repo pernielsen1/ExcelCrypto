@@ -1,5 +1,7 @@
 #----------------------------------------------------------------------------------------------
-# https://dev.mysql.com/doc/connector-python/en/connector-python-example-cursor-select.html
+# ToDo: `
+# Column width optimize
+# empty data_frame
 #---------------------------------------------------------------------------------------------
 import xlsxwriter
 from xlsxwriter.utility import xl_rowcol_to_cell
@@ -32,6 +34,7 @@ def readExcelAndCreateExcel():
     # all done
     workbook.close()
 
+   
 #----------------------------------------------------------
 # apply formula for a number of rows
 #--------------------------------------------------------
@@ -44,26 +47,44 @@ def apply_formula(ws, formula, column, start_row, num_rows):
 #----------------------------------------------------------
 # dataframe_to_sheet 
 #--------------------------------------------------------
-def dataframe_to_sheet(df, wb, sheet_name):
+def dataframe_to_sheet(df, wb, sheet_name, col_format):
   ws = wb.add_worksheet(sheet_name)
-
   # write column headings in first rowdata number 0
+  col_widths = {}
   cur_col = 0 
   column_names = df.columns
   for col in column_names:
       ws.write(0, cur_col, col)
+      col_widths[cur_col] = len(str(col).strip())
       cur_col = cur_col + 1 
+
   # loop through dataframe row by row and column by column write to cell in Excel
   cur_row = 1  # start after the header row     
   for index, row in df.iterrows():
       cur_col = 0 
       for key, value in row.items():
+        if len(str(value).strip()) > col_widths[cur_col] and len(str(value).strip()) < 15:
+           col_widths[cur_col] = len(str(value))
         ws.write(cur_row, cur_col, value)
         cur_col  = cur_col + 1
       cur_row = cur_row + 1  
+  # set column width and format col_format has wrap set on 
   # create range
-  last_cell = xl_rowcol_to_cell(cur_row - 1, cur_col-1, True, True)
-  wb.define_name("Range_" + sheet_name, "=" + sheet_name + "!" + "$A$2:"  + last_cell)
+
+  last_cell = xl_rowcol_to_cell(cur_row - 1, cur_col - 1, True, True)
+  wb.define_name("Range_" + ws.get_name(), "=" + ws.get_name() + "!" + "$A$2:"  + last_cell)
+  cur_col = 0
+  for col in column_names:
+    ws.set_column(cur_col, cur_col, col_widths[cur_col] + 2, col_format)
+    cur_col = cur_col + 1 
+
+#---------------------
+# set_tab_color
+#------------------------------
+def set_tab_cölor(wb, sheet_name, color):
+  ws = wb.get_worksheet_by_name(sheet_name)
+  ws.set_tab_color(color)
+
 
 #----------------------------------------------------------------
 # pandas to Excel
@@ -83,13 +104,25 @@ def pandas_to_excel():
 	    "key_to_t1": [ "k1", "k3", "K2"]
     }
   )
+  t3 = pd.DataFrame(
+    {
+      "key": [],
+	    "desc": [], 
+    }
+  )
+  
   out_Excel = excel_dir + "/pandas_to_excel.xlsx"
   wb = xlsxwriter.Workbook(out_Excel)
-  dataframe_to_sheet(t1, wb, "t1")     
-  dataframe_to_sheet(t2, wb, "t2")     
+  col_format = wb.add_format({'text_wrap': True})
+
+  dataframe_to_sheet(t1, wb, "t1", col_format)     
+  dataframe_to_sheet(t2, wb, "t2", col_format)     
+  dataframe_to_sheet(t3, wb, "t3", col_format)     
+
   ws_t2 = wb.get_worksheet_by_name("t2")
   formula="VLOOKUP(C#,Range_t1,2,FALSE)"
   apply_formula(ws_t2, formula,3,1,len(t2))
+  set_tab_cölor(wb,'t1','red')
   wb.close()
 
 #--------------------------
