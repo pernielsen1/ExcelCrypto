@@ -1,7 +1,5 @@
 #----------------------------------------------------------------------------------------------
 # ToDo: `
-# Column width optimize
-# empty data_frame
 #---------------------------------------------------------------------------------------------
 import xlsxwriter
 from xlsxwriter.utility import xl_rowcol_to_cell
@@ -33,16 +31,16 @@ def readExcelAndCreateExcel():
 
     # all done
     workbook.close()
-
    
 #----------------------------------------------------------
 # apply formula for a number of rows
 #--------------------------------------------------------
-def apply_formula(ws, formula, column, start_row, num_rows):
+def apply_formula(ws, formula, column, start_row, num_rows, col_format):
     for row_no in range(num_rows):
        new_formula = formula.replace("#",str(start_row + row_no + 1))
        ws.write_formula(start_row + row_no, column, "=" + new_formula)
-       ws.write(start_row + row_no, column + 1, new_formula)
+
+    ws.set_column(column, column, 15, col_format)
 
 #----------------------------------------------------------
 # dataframe_to_sheet 
@@ -68,11 +66,10 @@ def dataframe_to_sheet(df, wb, sheet_name, col_format):
         ws.write(cur_row, cur_col, value)
         cur_col  = cur_col + 1
       cur_row = cur_row + 1  
-  # set column width and format col_format has wrap set on 
   # create range
-
   last_cell = xl_rowcol_to_cell(cur_row - 1, cur_col - 1, True, True)
   wb.define_name("Range_" + ws.get_name(), "=" + ws.get_name() + "!" + "$A$2:"  + last_cell)
+  # set column widths + apply format with wrap text
   cur_col = 0
   for col in column_names:
     ws.set_column(cur_col, cur_col, col_widths[cur_col] + 2, col_format)
@@ -84,7 +81,6 @@ def dataframe_to_sheet(df, wb, sheet_name, col_format):
 def set_tab_cölor(wb, sheet_name, color):
   ws = wb.get_worksheet_by_name(sheet_name)
   ws.set_tab_color(color)
-
 
 #----------------------------------------------------------------
 # pandas to Excel
@@ -121,7 +117,7 @@ def pandas_to_excel():
 
   ws_t2 = wb.get_worksheet_by_name("t2")
   formula="VLOOKUP(C#,Range_t1,2,FALSE)"
-  apply_formula(ws_t2, formula,3,1,len(t2))
+  apply_formula(ws_t2, formula,3,1,len(t2), col_format)
   set_tab_cölor(wb,'t1','red')
   wb.close()
 
