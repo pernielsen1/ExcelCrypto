@@ -1,5 +1,8 @@
 #----------------------------------------------------
 # test_kafka:
+# commit strategies:
+# https://quarkus.io/blog/kafka-commit-strategies/
+¤ 
 # install kafka on Ubuntu wsl
 # https://medium.com/@vpriyanshu671/java-development-kit-jdk-22-installation-guide-for-wsl-455f34676b45
 # https://michaeljohnpena.com/blog/kafka-wsl2/
@@ -31,6 +34,6 @@ producer = KafkaProducer(bootstrap_servers=['localhost:9092'],
 for e in range(42):
     print("creating message" + str(e))
     data = {'number' : e}
-    producer.send('pers-topic', value=data)
+    producer.send('pers-control', value=data)
     sleep(5)
 

@@ -1,0 +1,16 @@
+import sys 
+import time 
+#----------------------------------------------------------
+# control: get_time
+# ------------------------------------------------------------
+def get_time(m_value):
+    pos_point = m_value.find(".")
+    str_seconds = m_value[0:pos_point]
+    str_nano = m_value[pos_point+1:len(m_value)]
+    long_seconds = int(str_seconds)
+    long_nano = int(str_nano)
+    t1 = time.clock_gettime_ns(time.CLOCK_REALTIME) 
+    total_nano = long_seconds * 1000000000 + long_nano 
+    diff = t1 - total_nano
+    return t1, total_nano, diff
+
