@@ -1,6 +1,7 @@
 // https://www.googleadservices.com/pagead/aclk?sa=L&ai=DChcSEwjQnZaPzMeKAxVkVZEFHX4XH3QYABAAGgJscg&ae=2&aspm=1&co=1&ase=2&gclid=Cj0KCQiAvbm7BhC5ARIsAFjwNHtB9F7sCMqnzGl4FZxnmoPS5j7PZvbxfEU2bIyL-K-O0p0HRWJess0aAlWkEALw_wcB&ohost=www.google.com&cid=CAESVeD2bMqjvZsu1XHwnfm-E916hAY-mOzytUfuP8qrQQVEvbXxyu4mOKbFPg5YrF3ssvQVeCmj-R9Lxu-XCtCNURRB1gofRXc043wjuLpmCNeNM8vPYCs&sig=AOD64_097dWoJISB0Gy4ru1PUdLI9WkVug&q&nis=4&adurl&ved=2ahUKEwj41JGPzMeKAxXuJhAIHeL9EmkQ0Qx6BAgMEAE
 // https://developer.confluent.io/get-started/c/?utm_medium=sem&utm_source=google&utm_campaign=ch.sem_br.nonbrand_tp.prs_tgt.dsa_mt.dsa_rgn.emea_lng.eng_dv.all_con.confluent-developer&utm_term=&creative=&device=c&placement=&gad_source=1&gclid=Cj0KCQiAvbm7BhC5ARIsAFjwNHtB9F7sCMqnzGl4FZxnmoPS5j7PZvbxfEU2bIyL-K-O0p0HRWJess0aAlWkEALw_wcB
 // https://code.visualstudio.com/docs/cpp/config-wsl
+// the task.json now has the needed include paths and libraries as arguments to compiler.
 
 #include <glib.h>
 #include <librdkafka/rdkafka.h>
@@ -64,21 +65,9 @@ int main (int argc, char **argv) {
 
 
     // Produce data by selecting random values from these lists.
-  //  const char *topic = "purchases";
     const char *topic = "pers-topic";
-    const char *user_ids[6] = {"eabara", "jsmith", "sgarcia", "jbernard", "htanaka", "awalther"};
-    const char *products[5] = {"book", "alarm clock", "t-shirts", "gift card", "batteries"};
-   // char time_str[80];
     for (unsigned long long  i = 0; i < message_count; i++) {
-        const char *key =  user_ids[random() % ARR_SIZE(user_ids)];
-        const char *value =  products[random() % ARR_SIZE(products)];
-        size_t key_len = strlen(key);
-        size_t value_len = strlen(value);
-
-        // Create a unique-key = the message number ensuring distribution on topics
-        char unique_key[50];
-        snprintf(unique_key, sizeof(unique_key),"Unique_key:%lld", i);
-        key = (const char *) &unique_key;
+     
 
         struct timespec spec;
         clock_gettime(CLOCK_REALTIME, &spec);
@@ -86,7 +75,16 @@ int main (int argc, char **argv) {
         snprintf(time_str, sizeof(time_str), "%"PRIdMAX".%"PRIdMAX"",
             (intmax_t) spec.tv_sec, (intmax_t) spec.tv_nsec);
         char * value_str = (char *) &time_str;
-        value_len = strlen(value_str);
+        size_t value_len = strlen(value_str);
+
+        // Create a unique-key = the message number ensuring distribution on topics
+        char unique_key[100];
+        snprintf(unique_key, sizeof(unique_key),"Unique_key:%lld_%s", i, value_str);
+        const char *key = (const char *) &unique_key;
+        size_t key_len = strlen(key);
+       
+
+
         rd_kafka_resp_err_t err;
 
         err = rd_kafka_producev(producer,

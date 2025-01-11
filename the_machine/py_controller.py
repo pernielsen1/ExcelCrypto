@@ -8,7 +8,7 @@ from kafka import KafkaProducer
 from json import dumps
 
 def stop_consumer(consumer):
-    print("stopping consumer" + consumer)
+#    print("stopping consumer" + consumer)
     t1 = time.clock_gettime_ns(time.CLOCK_REALTIME) 
     
     data = {'time_nanos' : str(t1), 

@@ -1,10 +1,15 @@
-echo "starting consumers"
-python3 py_consumer.py consumer1 &
-sleep 1
-python3 py_consumer.py consumer2 &
-sleep 1
-python3 py_consumer.py consumer3 &
-# sleep 1
-# python3 py_consumer.py consumer4 &
-
-echo "consumers started"
+#!/bin/bash
+if [ $# -eq 0 ]
+  then
+    NUM_CONSUMERS=4
+    echo "No arguments supplied defaults to $NUM_CONSUMERS"
+else
+    NUM_CONSUMERS=$1
+fi
+echo "starting $NUM_CONSUMERS consumers"
+for (( i=1; i<=$NUM_CONSUMERS; i++))
+do 
+   CONSUMER="consumer$i"
+#   echo "starting $CONSUMER"
+   python3 py_consumer.py $CONSUMER &
+done
