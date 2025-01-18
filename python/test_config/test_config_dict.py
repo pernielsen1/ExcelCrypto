@@ -18,7 +18,7 @@ def dump_dict(dict):
         print(key, value)
 
 if __name__ == "__main__":
-    dict = csv_to_dict('test_config_dict.csv','key', 'value')
+    dict = csv_to_dict('test_config/test_config_dict.csv','key', 'value')
     dump_dict(dict)
     dict_excel = excel_to_dict(excel_dir + 'test_config.xlsx', 'key', 'value')
     dump_dict(dict_excel)
