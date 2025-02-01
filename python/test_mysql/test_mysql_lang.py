@@ -28,7 +28,9 @@ def create_table_and_fill(cnx):
     cursor.execute( "INSERT INTO " + tbl_name + " (id, c, l)" +  " VALUES(" +  "1," + "'SE'," + "'SE')")
     cursor.execute( "INSERT INTO " + tbl_name + " (id, c, l)" +  " VALUES(" + "52," + "'SE'," + "'SE')")
     cursor.execute( "INSERT INTO " + tbl_name + " (id, c, l)" +  " VALUES(" +  "1," + "'SE'," + "'EN')")
-    cursor.execute( "INSERT INTO " + tbl_name + " (id, c, l)" +  " VALUES(" + "51," + "'NO'," + "'EN')")
+    cursor.execute( "INSERT INTO " + tbl_name + " (id, c, l)" +  " VALUES(" +  "52," + "'SE'," + "'EN')")
+
+    cursor.execute( "INSERT INTO " + tbl_name + " (id, c, l)" +  " VALUES(" + "51," + "'NO'," + "'NO')")
 
     cursor.execute( "INSERT INTO " + tbl_name + " (id, c, l)" +  " VALUES(" + "41," + "'AT'," + "'DE')")
     cursor.execute( "INSERT INTO " + tbl_name + " (id, c, l)" +  " VALUES(" + "41," + "'AT'," + "'EN')")
@@ -57,10 +59,13 @@ for (id, c, l) in cursor:
   print("id:" + str(id) + " c:", c + " l:" + l)
 
 print("Listing l per c")
-query = "select distinct a.c, b.l from test_c_and_l a inner join test_c_and_l b on a.c=b.c"
+query = ("select a.c, a.id, b.l from " +  
+    "(select distinct c, case when c = 'SE' then 52 when c='NO' then 51 else 41 end as id from test_c_and_l) a " + 
+    "inner join test_c_and_l b on a.id = b.id and a.c = b.c " + 
+    "order by a.id desc")
 cursor.execute(query)
-for (c, l) in cursor:
-  print(" c:" + c + " l:" + l)
+for (c, id, l) in cursor:
+  print(" c:" + c + " id:" + str(id) + " l:" + l)
  
 cursor.close()
 cnx.close()
