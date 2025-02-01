@@ -3,69 +3,63 @@
 #---------------------------------------------------------------------------------------------
 import mysql.connector
 
-def drop_table(cnx, table_name):
-    cursor=cnx.cursor()
-    # drop the old tables if they exist
-    try:
-        cursor.execute("drop table test_db." + table_name)
-    except mysql.connector.Error as err:
-        print(err.msg)
-    else:
-        print("table:" + table_name + " dropped")
+#------------------------------------------------------------------------------
+# create table in db - insert values and list the inserted values
+#------------------------------------------------------------------------------
+def do_it():
 
-def create_table_and_fill(cnx):
-    tbl_name = "selected_cnt"
-    drop_table(cnx, tbl_name)
+  db_host = '127.0.0.1'
+  db_name= 'test_db'
+  db_user = "root"
+  db_pwd = "password"
+  tbl_name = "test_c_and_l"
+
+  cnx = mysql.connector.connect(user=db_user, password=db_pwd, host=db_host, database=db_name)
+  cursor = cnx.cursor()
+
+# delete table if existing  
+  try:
+    cursor.execute("drop table test_db." + tbl_name)
+  except mysql.connector.Error as err:
+     print(err.msg)
+  else:
+    print("table:" + tbl_name + " dropped")
+
+  cursor.execute("create table " + tbl_name + "  (id integer, c char(2), l char(2))")
+    
+  cursor.execute( "INSERT INTO " + tbl_name + " (id, c, l) VALUES(" +  "1," + "'SE'," + "'SE')")
+  cursor.execute( "INSERT INTO " + tbl_name + " (id, c, l) VALUES(" + "52," + "'SE'," + "'SE')")
+  cursor.execute( "INSERT INTO " + tbl_name + " (id, c, l) VALUES(" +  "1," + "'SE'," + "'EN')")
+  cursor.execute( "INSERT INTO " + tbl_name + " (id, c, l) VALUES(" +  "52," + "'SE'," + "'EN')")
+
+  cursor.execute( "INSERT INTO " + tbl_name + " (id, c, l) VALUES(" + "51," + "'NO'," + "'NO')")
+
+  cursor.execute( "INSERT INTO " + tbl_name + " (id, c, l) VALUES(" + "41," + "'AT'," + "'DE')")
+  cursor.execute( "INSERT INTO " + tbl_name + " (id, c, l) VALUES(" + "41," + "'AT'," + "'EN')")
+  cursor.execute( "INSERT INTO " + tbl_name + " (id, c, l) VALUES(" + "41," + "'DE'," + "'DE')")
+  cursor.execute( "INSERT INTO " + tbl_name + " (id, c, l) VALUES(" + "41," + "'DE'," + "'EN')")
 
 
-    tbl_name = "test_c_and_l"
-    drop_table(cnx, tbl_name)
+  print("Listing full table:")
+  cursor.execute("SELECT id, c, l from test_c_and_l")
+  for (id, c, l) in cursor:
+    print("id:" + str(id) + " c:", c + " l:" + l)
 
-    cursor = cnx.cursor()
-    fields =  "(id integer, c char(2), l char(2))"
-    cursor.execute("create table " + tbl_name + " " + fields)
-   
-    cursor.execute( "INSERT INTO " + tbl_name + " (id, c, l)" +  " VALUES(" +  "1," + "'SE'," + "'SE')")
-    cursor.execute( "INSERT INTO " + tbl_name + " (id, c, l)" +  " VALUES(" + "52," + "'SE'," + "'SE')")
-    cursor.execute( "INSERT INTO " + tbl_name + " (id, c, l)" +  " VALUES(" +  "1," + "'SE'," + "'EN')")
-    cursor.execute( "INSERT INTO " + tbl_name + " (id, c, l)" +  " VALUES(" +  "52," + "'SE'," + "'EN')")
+  print("Listing l per c")
+  query = ("select a.c, a.id, b.l from " +  
+      "(select distinct c, case when c = 'SE' then 52 when c='NO' then 51 else 41 end as id from test_c_and_l) a " + 
+      "inner join test_c_and_l b on a.id = b.id and a.c = b.c " + 
+      "order by a.id desc")
 
-    cursor.execute( "INSERT INTO " + tbl_name + " (id, c, l)" +  " VALUES(" + "51," + "'NO'," + "'NO')")
+  cursor.execute(query)
+  for (c, id, l) in cursor:
+    print(" c:" + c + " id:" + str(id) + " l:" + l)
 
-    cursor.execute( "INSERT INTO " + tbl_name + " (id, c, l)" +  " VALUES(" + "41," + "'AT'," + "'DE')")
-    cursor.execute( "INSERT INTO " + tbl_name + " (id, c, l)" +  " VALUES(" + "41," + "'AT'," + "'EN')")
-    cursor.execute( "INSERT INTO " + tbl_name + " (id, c, l)" +  " VALUES(" + "41," + "'DE'," + "'DE')")
-    cursor.execute( "INSERT INTO " + tbl_name + " (id, c, l)" +  " VALUES(" + "41," + "'DE'," + "'EN')")
+  cursor.close()
+  cnx.commit()
+  cnx.close()
 
-    cnx.commit()
-    return
-
-
-#--------------------------------------------------------------------------------------
-# here we go
-#---------------------------------------------------------------------------------------
-cnx = mysql.connector.connect(user='root', password='password',
-                              host='127.0.0.1',
-                              database='test_db')
-
-create_table_and_fill(cnx)
-
-cursor = cnx.cursor()
-
-print("Listing full table:")
-query = "SELECT id, c, l from test_c_and_l"
-cursor.execute(query)
-for (id, c, l) in cursor:
-  print("id:" + str(id) + " c:", c + " l:" + l)
-
-print("Listing l per c")
-query = ("select a.c, a.id, b.l from " +  
-    "(select distinct c, case when c = 'SE' then 52 when c='NO' then 51 else 41 end as id from test_c_and_l) a " + 
-    "inner join test_c_and_l b on a.id = b.id and a.c = b.c " + 
-    "order by a.id desc")
-cursor.execute(query)
-for (c, id, l) in cursor:
-  print(" c:" + c + " id:" + str(id) + " l:" + l)
- 
-cursor.close()
-cnx.close()
+#----------------------------------
+# here  we go
+#----------------------------------
+do_it()
