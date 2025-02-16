@@ -2,7 +2,8 @@
 # https://dev.mysql.com/doc/connector-python/en/connector-python-example-cursor-select.html
 #---------------------------------------------------------------------------------------------
 import mysql.connector
-
+import os
+import pwd
 #------------------------------------------------------------------------------
 # create table in db - insert values and list the inserted values
 #------------------------------------------------------------------------------
@@ -59,7 +60,10 @@ def do_it():
   cnx.commit()
   cnx.close()
 
+
 #----------------------------------
 # here  we go
 #----------------------------------
+user = pwd.getpwuid(os.getuid())[0]
+print(user)
 do_it()
