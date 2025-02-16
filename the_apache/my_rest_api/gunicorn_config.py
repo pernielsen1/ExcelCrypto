@@ -5,7 +5,7 @@ workers = 3
 # let the socket file reside inside apache
 umask = 511
 
-bind = 'unix:/var/www/sockets/flaskrest.sock'
+bind = 'unix:/var/www/sockets/my_rest_api.sock'
 # bind = '127.0.0.1:8080'
 # umask = 0o007
 

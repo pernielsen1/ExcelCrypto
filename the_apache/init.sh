@@ -5,9 +5,11 @@
 # config file: 
 # cat /etc/apache2/apache2.conf
 # the howto i followed
+# https://medium.com/@thishantha17/build-a-simple-python-rest-api-with-apache2-gunicorn-and-flask-on-ubuntu-18-04-c9d47639139b
+# kill all...
 # sudo pkill -f /home/perni/ExcelCrypto/the_apache/my_rest_api/flaskvenv
 # ps -aux
-# https://medium.com/@thishantha17/build-a-simple-python-rest-api-with-apache2-gunicorn-and-flask-on-ubuntu-18-04-c9d47639139b
+
 mkdir my_rest_api
 cd my_rest_api
 python3 -m venv flaskvenv
@@ -36,10 +38,3 @@ sudo chmod +777 /var/www/sockets
 
 cd .. 
 
-
-
-#--- 
-# old 
-# python3 -m venv .venv.
-# source .venv/bin/activate
-# sudo service apache2 start

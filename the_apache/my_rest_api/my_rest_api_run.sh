@@ -14,7 +14,7 @@ PERNI_HOME="/home/perni"
 REST_DIR="$PERNI_HOME/ExcelCrypto/the_apache/my_rest_api/"
 cd $REST_DIR
 # SCRIPT="flaskvenv/bin/gunicorn  --config gunicorn_config.py wsgi:app"
-SCRIPT="flaskvenv/bin/gunicorn  --workers=3 --bind unix:/var/www/sockets/flaskrest.sock -m 777 wsgi:app"
+SCRIPT="flaskvenv/bin/gunicorn  --workers=3 --bind unix:/var/www/sockets/my_rest_api.sock -m 777 wsgi:app"
 echo "Executing:" $SCRIPT " in dir:" + $REST_DIR " with user:" $CUR_USER
 $SCRIPT
 
